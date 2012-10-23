@@ -2,6 +2,7 @@ from __future__ import division
 import scipy as sp
 import scipy.io as sio
 import numpy as np
+import glob as glob
 import git as git
 import tables as tables
 
@@ -28,9 +29,15 @@ class Database():
         self.file = tables.openFile(FileName, mode = "w", title = 'NeuronAnalysis')
 
 
-    def AddData2Database(self, DataName, Data, GroupName):
+    def AddData2Database(self, DataName, Data, GroupName, Parents = None):
         
-        loc = 'self.file.root.' + GroupName 
+        if Parents == None:
+            loc = 'self.file.root.' + GroupName 
+
+        else :
+            loc = 'self.file.root.' + GroupName
+            for name in Parents:
+                loc += '.' + Parents
         
         atom = tables.Atom.from_dtype(Data.dtype)
         ds = self.file.createCArray(eval(loc), DataName, atom, Data.shape)
@@ -69,11 +76,6 @@ class Database():
         else:
 
             print 'Ok, nothing changed.'
-
-
-    def AddMetaData(self, metadata):
-        
-        self.file.attrs.content_type = 'text/plain; charset=us-ascii'
      
 
     def OpenMatlabData(self, FileName, Directory):
@@ -91,28 +93,33 @@ class Database():
         if subdirectories == 0:
             self.DirFiles = []
             for name in glob.glob(Directory + suffix):
-                self.DirFiles = np.append(files,name)
+                self.DirFiles = np.append(self.DirFiles,name)
         
         if subdirectories == 1:
             self.DirFiles = []
             for name in glob.glob(Directory + '*/' + suffix):
-                self.DirFiles = np.append(files,name)
+                self.DirFiles = np.append(self.DirFiles,name)
 
         if subdirectories == 2:
             self.DirFiles = []
             for name in glob.glob(Directory + '*/*/' + suffix):
-                self.DirFiles = np.append(files,name)
+                self.DirFiles = np.append(self.DirFiles,name)
 
 
 
-    def ImportAllData(self, FileName, Directory):
+    def ImportAllData(self, Name, Directory = None):
 
-        self.getAllFiles(Directory)
-        self.CreateGroup(Directory)
+        self.CreateDatabase(Name + '.h5')
+        self.getAllFiles(Name)
+        self.CreateGroup(Name)
 
-        for i in range(0, len(self.getAllFiles)):
+        for i in range(0, self.DirFiles.shape[0] ):
+            FileName = self.DirFiles[i][-12:-4] # select only 'epochXXX.mat'
 
-            self.ImportDataFromMatlab(FileName, Directory)
+            self.OpenMatlabData(FileName, Name)
+            self.ImportDataFromMatlab(FileName, Name)
+        
+        self.CloseDatabase()
 
 
     def ImportDataFromMatlab(self, FileName, Directory):
@@ -122,11 +129,9 @@ class Database():
         ## Get meta data.
 
         #Database.CreateGroup('Info')
-        self.AddData2Database('fileComment', np.array([self.NeuronData['fileComment'][0]],dtype=str), Directory)
+        self.AddData2Database('fileComment', np.array([self.NeuronData['fileComment'][0]],dtype=str), Directory + '.' + FileName)
 
         self.AddData2Database('binRate',            self.NeuronData['data']['binRate'][0][0][0]        , Directory + '.' + FileName)
-        self.AddData2Database('ouputClass',         self.NeuronData['data']['outputClass'][0][0][0]    , Directory + '.' + FileName)
-        self.AddData2Database('stimulusType',       self.NeuronData['data']['stimulusType'][0][0][0]   , Directory + '.' + FileName)
         self.AddData2Database('numSegments',        self.NeuronData['data']['numSegments'][0][0][0]    , Directory + '.' + FileName)
         self.AddData2Database('si',                 self.NeuronData['data']['si'][0][0][0]             , Directory + '.' + FileName)
         self.AddData2Database('clockstep',          self.NeuronData['data']['clockstep'][0][0][0]      , Directory + '.' + FileName)
@@ -142,60 +147,47 @@ class Database():
         self.AddData2Database('stimSamples',        self.NeuronData['data']['stimSamples'][0][0][0]    , Directory + '.' + FileName)
         self.AddData2Database('time',               self.NeuronData['data']['time'][0][0][0]           , Directory + '.' + FileName)
         self.AddData2Database('epochSize',          self.NeuronData['data']['epochSize'][0][0][0]      , Directory + '.' + FileName)
-        self.AddData2Database('recordingMode',      self.NeuronData['data']['recordingMode'][0][0][0]  , Directory + '.' + FileName)
         self.AddData2Database('subThreshold',       self.NeuronData['data']['subThreshold'][0][0][0]   , Directory + '.' + FileName)
         self.AddData2Database('spikes',             self.NeuronData['data']['spikes'][0][0][0]         , Directory + '.' + FileName)
-        self.AddData2Database('spikeTimes',         self.NeuronData['data']['spikeTimes'][0][0][0]     , Directory + '.' + FileName)
-
-        self.AddData2Database('fileComment', np.array([self.NeuronData['data']['epochComment'][0][0][0] ],dtype=str), Directory)
+        #self.AddData2Database('spikeTimes',         self.NeuronData['data']['spikeTimes'][0][0][0][0][0], Directory + '.' + FileName)
+        self.AddData2Database('recordingMode',      np.array([self.NeuronData['data']['recordingMode'][0][0][0]],dtype = str), 
+                              Directory + '.' + FileName)
+        self.AddData2Database('ouputClass',         np.array([self.NeuronData['data']['outputClass'][0][0][0]],dtype = str), 
+                              Directory + '.' + FileName)
+        self.AddData2Database('stimulusType',       np.array([self.NeuronData['data']['stimulusType'][0][0][0]],dtype = str), 
+                              Directory + '.' + FileName)
+        self.AddData2Database('epochComment', np.array([self.NeuronData['data']['epochComment'][0][0][0] ],dtype=str), 
+                              Directory + '.' + FileName)
 
         # now load the params:
         self.CreateGroup('params', Directory + '/' + FileName )
-        self.AddData2Database('MatlabCodeDir',          np.array([self.NeuronData['data']['params'][0][0][0]['MatlabCodeDir'][0][0]],
-                                                                 dtype=str), Directory + '.' + FileName + '.params')
-        self.AddData2Database('Xpos',                   self.NeuronData['data']['params'][0][0][0]['Xpos'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('Ypos',                   self.NeuronData['data']['params'][0][0][0]['Ypos'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('colorGammaTable',        self.NeuronData['data']['params'][0][0][0]['colorGammaTable'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('diameter',               self.NeuronData['data']['params'][0][0][0]['diameter'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('epochNumber',            self.NeuronData['data']['params'][0][0][0]['epochNumber'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('flipInterval',           self.NeuronData['data']['params'][0][0][0]['flipInterval'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('integratedIntensity',    self.NeuronData['data']['params'][0][0][0]['integratedIntensity'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('intensity',              self.NeuronData['data']['params'][0][0][0]['intensity'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('intensity_raw',          self.NeuronData['data']['params'][0][0][0]['intensity_raw'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('rand_behavior',          self.NeuronData['data']['params'][0][0][0]['rand_behavior'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('repositoryVersion',      self.NeuronData['data']['params'][0][0][0]['repositoryVersion'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('screenX',                self.NeuronData['data']['params'][0][0][0]['screenX'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('screenY',                self.NeuronData['data']['params'][0][0][0]['screenY'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('sequential',             self.NeuronData['data']['params'][0][0][0]['sequential'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('spatial_meanLevel',      self.NeuronData['data']['params'][0][0][0]['spatial_meanLevel'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('spatial_postpts',        self.NeuronData['data']['params'][0][0][0]['spatial_postpts'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('spatial_prepts',         self.NeuronData['data']['params'][0][0][0]['spatial_prepts'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('spatial_stimpts',        self.NeuronData['data']['params'][0][0][0]['spatial_stimpts'][0][0], 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('stimClass',              np.array([self.NeuronData['data']['params'][0][0][0]['stimClass'][0][0]],dtype=str), 
-                              Directory + '.' + FileName + '.params')
-        self.AddData2Database('windowPtr',              self.NeuronData['data']['params'][0][0][0]['windowPtr'][0][0], 
-                              Directory + '.' + FileName + '.params')
+
+        PARAMS = np.array(['Xpos', 'Ypos', 'colorGammaTable', 'diameter', 'epochNumber', 'flipInterval', 'integratedIntensity', 'intensity',
+                  'intensity_raw', 'rand_behavior', 'repositoryVersion', 'screenX', 'screenY', 'sequential', 'spatial_meanLevel',
+                  'spatial_postpts', 'spatial_prepts', 'windowPtr', 'stimClass', 'MatlabCodeDir'], dtype = str)
+
+        STRINGS = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1], dtype = int)
+        for i, name in enumerate(PARAMS):
+
+            try:
+                Data = self.NeuronData['data']['params'][0][0][0][name][0][0]
+            except:
+                Data = np.array(['none entered'], dtype = str)
+                STRINGS[i] = 0
+
+            if STRINGS[i] == 0:
+
+                    self.AddData2Database(name, Data, Directory + '.' + FileName + '.params')
+
+            if STRINGS[i] == 1:
+
+                    self.AddData2Database(name, np.array([ Data ], dtype=str), Directory + '.' + FileName + '.params')
 
 
     def CloseDatabase(self):
         
         self.file.close()
         print "database closed"
+
+Db = Database()
+Db.ImportAllData('Oct0212Bc8')
