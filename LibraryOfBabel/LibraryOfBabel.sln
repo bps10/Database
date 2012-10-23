@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibraryOfBabel", "LibraryOfBabel\LibraryOfBabel.csproj", "{D6BC034B-CA30-43CB-B435-70A44773887B}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "BabelPython", "BabelPython\BabelPython.pyproj", "{6E278E0C-3F54-40AF-8C6F-0F4AF1D48A15}"
+EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "LibraryOfBabelDatabase", "LibraryOfBabelDatabase\LibraryOfBabelDatabase.sqlproj", "{791D733D-70CF-42F6-AD42-6FD6EA8B09AD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D6BC034B-CA30-43CB-B435-70A44773887B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6BC034B-CA30-43CB-B435-70A44773887B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6BC034B-CA30-43CB-B435-70A44773887B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6BC034B-CA30-43CB-B435-70A44773887B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E278E0C-3F54-40AF-8C6F-0F4AF1D48A15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E278E0C-3F54-40AF-8C6F-0F4AF1D48A15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{791D733D-70CF-42F6-AD42-6FD6EA8B09AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{791D733D-70CF-42F6-AD42-6FD6EA8B09AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{791D733D-70CF-42F6-AD42-6FD6EA8B09AD}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{791D733D-70CF-42F6-AD42-6FD6EA8B09AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{791D733D-70CF-42F6-AD42-6FD6EA8B09AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{791D733D-70CF-42F6-AD42-6FD6EA8B09AD}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
