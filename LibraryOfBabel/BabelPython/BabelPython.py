@@ -131,33 +131,35 @@ class Database():
         #Database.CreateGroup('Info')
         self.AddData2Database('fileComment', np.array([self.NeuronData['fileComment'][0]],dtype=str), Directory + '.' + FileName)
 
-        self.AddData2Database('binRate',            self.NeuronData['data']['binRate'][0][0][0]        , Directory + '.' + FileName)
-        self.AddData2Database('numSegments',        self.NeuronData['data']['numSegments'][0][0][0]    , Directory + '.' + FileName)
-        self.AddData2Database('si',                 self.NeuronData['data']['si'][0][0][0]             , Directory + '.' + FileName)
-        self.AddData2Database('clockstep',          self.NeuronData['data']['clockstep'][0][0][0]      , Directory + '.' + FileName)
-        self.AddData2Database('sampleInterval',     self.NeuronData['data']['sampleInterval'][0][0][0] , Directory + '.' + FileName)
-        self.AddData2Database('sampleRate',         self.NeuronData['data']['sampleRate'][0][0][0]     , Directory + '.' + FileName)
-        self.AddData2Database('ampMode',            self.NeuronData['data']['ampMode'][0][0][0]        , Directory + '.' + FileName)
-        self.AddData2Database('ampGain',            self.NeuronData['data']['ampGain'][0][0][0]        , Directory + '.' + FileName)
-        self.AddData2Database('rawData',            self.NeuronData['data']['rawData'][0][0][0]        , Directory + '.' + FileName)
-        self.AddData2Database('monitorData',        self.NeuronData['data']['monitorData'][0][0][0]    , Directory + '.' + FileName)
-        self.AddData2Database('frameRate',          self.NeuronData['data']['frameRate'][0][0][0]      , Directory + '.' + FileName)
-        self.AddData2Database('preSamples',         self.NeuronData['data']['preSamples'][0][0][0]     , Directory + '.' + FileName)
-        self.AddData2Database('postSamples',        self.NeuronData['data']['postSamples'][0][0][0]    , Directory + '.' + FileName)
-        self.AddData2Database('stimSamples',        self.NeuronData['data']['stimSamples'][0][0][0]    , Directory + '.' + FileName)
-        self.AddData2Database('time',               self.NeuronData['data']['time'][0][0][0]           , Directory + '.' + FileName)
-        self.AddData2Database('epochSize',          self.NeuronData['data']['epochSize'][0][0][0]      , Directory + '.' + FileName)
-        self.AddData2Database('subThreshold',       self.NeuronData['data']['subThreshold'][0][0][0]   , Directory + '.' + FileName)
-        self.AddData2Database('spikes',             self.NeuronData['data']['spikes'][0][0][0]         , Directory + '.' + FileName)
-        #self.AddData2Database('spikeTimes',         self.NeuronData['data']['spikeTimes'][0][0][0][0][0], Directory + '.' + FileName)
-        self.AddData2Database('recordingMode',      np.array([self.NeuronData['data']['recordingMode'][0][0][0]],dtype = str), 
-                              Directory + '.' + FileName)
-        self.AddData2Database('ouputClass',         np.array([self.NeuronData['data']['outputClass'][0][0][0]],dtype = str), 
-                              Directory + '.' + FileName)
-        self.AddData2Database('stimulusType',       np.array([self.NeuronData['data']['stimulusType'][0][0][0]],dtype = str), 
-                              Directory + '.' + FileName)
-        self.AddData2Database('epochComment', np.array([self.NeuronData['data']['epochComment'][0][0][0] ],dtype=str), 
-                              Directory + '.' + FileName)
+        PARAMS = np.array(['binRate', 'numSegments', 'si', 'clockstep', 'sampleInterval', 'sampleRate', 'ampMode', 'ampGain',
+                           'rawData', 'monitorData', 'frameRate', 'preSamples', 'postSamples', 'stimSamples', 'time', 'epochsize',
+                           'subThreshold', 'spikes', 'spikeTimes', 'recordingMode', 'outputClass', 'stimulusType', 'epochComment'])
+
+        STRINGS = np.array([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1])
+
+        for i, name in enumerate(PARAMS):
+
+            try:
+                if name != 'spikeTimes':
+                    Data = self.NeuronData['data'][name][0][0][0]
+                else:
+                    Data = self.NeuronData['data'][name][0][0][0][0][0]
+                    if Data.shape[0] == 0:
+                        Data = np.array(['none entered'], dtype = str)
+                        STRINGS[i] = 0
+
+            except:
+
+                Data = np.array(['none entered'], dtype = str)
+                STRINGS[i] = 0
+
+            if STRINGS[i] == 0:
+ 
+                self.AddData2Database(name, Data, Directory + '.' + FileName)
+
+            if STRINGS[i] == 1:
+
+                self.AddData2Database(name, np.array([ Data ], dtype=str), Directory + '.' + FileName)
 
         # now load the params:
         self.CreateGroup('params', Directory + '/' + FileName )
