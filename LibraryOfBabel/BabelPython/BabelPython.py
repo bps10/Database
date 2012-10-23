@@ -118,17 +118,20 @@ class Database():
 
             self.OpenMatlabData(FileName, Name)
             self.ImportDataFromMatlab(FileName, Name)
-        
+
+        self.AddGitVersion('InitialImport')
         self.CloseDatabase()
 
 
-    def ImportDataFromMatlab(self, FileName, Directory):
 
+    def ImportDataFromMatlab(self, FileName, Directory):
+        
         self.CreateGroup(FileName, Directory)
+
+        
 
         ## Get meta data.
 
-        #Database.CreateGroup('Info')
         self.AddData2Database('fileComment', np.array([self.NeuronData['fileComment'][0]],dtype=str), Directory + '.' + FileName)
 
         PARAMS = np.array(['binRate', 'numSegments', 'si', 'clockstep', 'sampleInterval', 'sampleRate', 'ampMode', 'ampGain',
@@ -184,7 +187,35 @@ class Database():
             if STRINGS[i] == 1:
 
                     self.AddData2Database(name, np.array([ Data ], dtype=str), Directory + '.' + FileName + '.params')
+ 
+                          
+    def Exists(self, FILE):
+        
+        TF = self.file.__contains__('/' + FILE)
+        return TF
 
+
+    def GetGitRepo(self, WorkingDir = '/Users/Brian/Documents/Database'):
+
+        self.GitRepo = git.Repo(WorkingDir)
+
+
+    def AddGitVersion(self, Action):
+
+        self.GetGitRepo
+       
+        if self.Exists('git') == False:
+
+            self.CreateGroup('git')
+
+        dat = np.array([], dtype = str)
+        for i in range(0,5):
+
+            dat = np.append(dat, str(GitRepo.head.log()[-1][:][i]) )
+
+        self.AddData2Database(Action, dat, 'git')
+        
+                
 
     def CloseDatabase(self):
         
