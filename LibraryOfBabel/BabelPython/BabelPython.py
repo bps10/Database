@@ -1,5 +1,4 @@
-from __future__ import division
-import scipy as sp
+#import scipy as sp
 import scipy.io as sio
 import numpy as np
 import glob as glob
@@ -222,5 +221,5 @@ class Database():
         self.file.close()
         print "database closed"
 
-Db = Database()
-Db.ImportAllData('Oct0212Bc8')
+#Db = Database()
+#Db.ImportAllData('Oct0212Bc8')
