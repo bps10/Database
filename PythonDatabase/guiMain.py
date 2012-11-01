@@ -7,10 +7,11 @@ Created on Fri Oct 26 13:30:48 2012
 # guidata imports
 from guidata.dataset.qtwidgets import DataSetShowGroupBox
 from guidata.qt.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-                              QMainWindow, QLineEdit, QTreeWidget, QTreeWidgetItem)
+                              QMainWindow, QLineEdit, QTreeWidget, QTreeWidgetItem, 
+                              QCheckBox, QSpacerItem, QLabel    )
 from guidata.qt.QtCore import (SIGNAL, QAbstractListModel, QModelIndex, QVariant, 
                                Qt)
-from guidata.dataset.dataitems import StringItem, DirectoryItem
+from guidata.dataset.dataitems import StringItem, DirectoryItem, BoolItem
 from guidata.dataset.datatypes import DataSet
 from guidata.qthelpers import create_action, add_actions, get_std_icon
 
@@ -62,19 +63,34 @@ class FilterTestWidget(QWidget):
         self.Epoch      = QLineEdit("Epoch name")
         self.QueryName  = QLineEdit("Data selection")
         
-        # create table
+
+        # create tree
         self.databaseScroll = databaseListModel()
-         
+        
+
+        text = QLabel("Preprocess data")
+        spacer = QSpacerItem(30,40)
+        
+        # create buttons
         listButton = QPushButton(u"Refresh list")
-        button = QPushButton(u"New Query: %s" % title)
-        #itemDoubleClicked
+        queryButton = QPushButton(u"New Query: %s" % title)
+        processButton = QPushButton(u"run preprocessing")
+        
+        self.wavelet = QCheckBox(u"Wavelet")
+        self.noneyet = QCheckBox(u"None Yet")
+        
+        # connect user actions with methods:
         self.connect(listButton, SIGNAL('clicked()'), self.but_clicked)
-        self.connect(button, SIGNAL('clicked()'), self.query_database)
+        self.connect(queryButton, SIGNAL('clicked()'), self.query_database)
+        self.connect(processButton, SIGNAL('clicked()'), self.run_preprocess)
         self.connect(self.databaseScroll, SIGNAL("doubleClicked(QModelIndex)"), 
                      self.double_clicked)
 
         vlayout = QVBoxLayout()
         hlayout = QHBoxLayout()
+        h2layout = QHBoxLayout()
+        v2layout = QVBoxLayout()
+        
         vlayout.addWidget(self.databaseScroll)
         vlayout.addWidget(listButton)
         hlayout.addWidget(self.Neuron)
@@ -82,13 +98,33 @@ class FilterTestWidget(QWidget):
         hlayout.addWidget(self.QueryName)
         vlayout.addLayout(hlayout)
         
-        vlayout.addWidget(button)
+        vlayout.addWidget(queryButton)
         vlayout.addWidget(self.plot)
+        vlayout.addSpacerItem(spacer)
+        vlayout.addWidget(text)
         
-
+        v2layout.addWidget(self.wavelet)
+        v2layout.addWidget(self.noneyet)
+        h2layout.addLayout(v2layout)
+        h2layout.addWidget(processButton)        
+        
+        vlayout.addLayout(h2layout)
         self.setLayout(vlayout)
         
         self.update_curve()
+        
+     
+    def run_preprocess(self):
+        
+        if self.wavelet.isChecked():
+            
+
+            yData = np.array([self.y]).T
+            print yData
+            waveletSpikes = pp.wavefilter(yData)
+            self.y = waveletSpikes
+            self.update_curve()
+
         
         
     def query_database(self):
@@ -241,11 +277,25 @@ class Dbase():
         
         return tree
         
-
+'''
+class PreprocessingCheckboxes(DataSet):
+    def __init__(self):
+ 
+    
+        QWidget.__init__(self)
+        vlayout = QVBoxLayout()
+        Wavelet = BoolItem("Wavelet")
+        Null    = BoolItem("Null")
+        Button  = QPushButton("preprocess data")
+        vlayout.addWidget(Wavelet)
+        vlayout.addWidget(Button)
+    
+        self.setLayout(vlayout)
+'''
 class FindFile(DataSet):
 
-    Directory = DirectoryItem("Directory")
-    NeuronName = StringItem("NeuronName")
+    Directory   = DirectoryItem("Directory")
+    NeuronName  = StringItem("NeuronName")
     
     
 class Window(QMainWindow):
