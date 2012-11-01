@@ -12,7 +12,7 @@
     <OutputPath>.</OutputPath>
     <Name>BabelPython</Name>
     <RootNamespace>BabelPython</RootNamespace>
-    <LaunchProvider>IronPython (.NET) launcher</LaunchProvider>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
     <CommandLineArguments />
     <InterpreterPath />
     <InterpreterArguments>

@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+
 """ A python module for raw communication with Matlab(TM) using COM client
  under windows.
 
@@ -157,3 +160,4 @@ if __name__ == '__main__':
                         'no_such_function')
 
   unittest.main()
+
