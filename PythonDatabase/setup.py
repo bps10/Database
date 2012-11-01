@@ -7,12 +7,10 @@ Created on Sat Oct 27 15:34:23 2012
 
 from distutils.core import setup
 import py2exe # Patching distutils setup
-from guidata.disthelpers import (remove_build_dist, get_default_excludes,
-                         get_default_dll_excludes, create_vs2008_data_files,
-                         add_modules)
+import guidata.disthelpers as dh
 
 # Removing old build/dist folders
-remove_build_dist()
+dh.remove_build_dist()
 
 # Including/excluding DLLs and Python modules
 EXCLUDES = get_default_excludes()

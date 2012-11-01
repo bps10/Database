@@ -8,12 +8,12 @@ Created on Fri Oct 26 13:30:48 2012
 from guidata.dataset.qtwidgets import DataSetShowGroupBox
 from guidata.qt.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                               QMainWindow, QLineEdit, QTreeWidget, QTreeWidgetItem, 
-                              QCheckBox, QSpacerItem, QLabel    )
+                              QCheckBox, QSpacerItem, QLabel, QFont, QDockWidget )
 from guidata.qt.QtCore import (SIGNAL, QAbstractListModel, QModelIndex, QVariant, 
                                Qt)
-from guidata.dataset.dataitems import StringItem, DirectoryItem, BoolItem
+from guidata.dataset.dataitems import StringItem, DirectoryItem
 from guidata.dataset.datatypes import DataSet
-from guidata.qthelpers import create_action, add_actions, get_std_icon
+from guidata.qthelpers import create_action, add_actions #, get_std_icon
 
 # user defined imports
 import Database as Db
@@ -21,15 +21,15 @@ import PreProcessing as pp
 
 # general
 import numpy as np
-import sys
+
 
 #---Import plot widget base class
 from guiqwt.curve import CurvePlot
 from guiqwt.plot import PlotManager
 from guiqwt.builder import make
-from guidata.configtools import get_icon
+#from guidata.configtools import get_icon
 #---
-
+from spyderlib.widgets.internalshell import InternalShell
 
     
 class FilterTestWidget(QWidget):
@@ -117,13 +117,14 @@ class FilterTestWidget(QWidget):
     def run_preprocess(self):
         
         if self.wavelet.isChecked():
-            
-
-            yData = np.array([self.y]).T
-            print yData
-            waveletSpikes = pp.wavefilter(yData)
-            self.y = waveletSpikes
-            self.update_curve()
+            try:
+                yData = self.y
+                waveletSpikes = pp.wavefilter(yData)
+                self.y = waveletSpikes
+                self.update_curve()
+            except:
+                print 'Could not compute wave filter'
+                pass
 
         
         
@@ -277,21 +278,7 @@ class Dbase():
         
         return tree
         
-'''
-class PreprocessingCheckboxes(DataSet):
-    def __init__(self):
- 
-    
-        QWidget.__init__(self)
-        vlayout = QVBoxLayout()
-        Wavelet = BoolItem("Wavelet")
-        Null    = BoolItem("Null")
-        Button  = QPushButton("preprocess data")
-        vlayout.addWidget(Wavelet)
-        vlayout.addWidget(Button)
-    
-        self.setLayout(vlayout)
-'''
+
 class FindFile(DataSet):
 
     Directory   = DirectoryItem("Directory")
@@ -302,12 +289,12 @@ class Window(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
         self.setWindowTitle("Neuron Database")
-        self.setWindowIcon(get_icon('guiqwt.png'))
+        #self.setWindowIcon(get_icon('guiqwt.png'))
         
         file_menu = self.menuBar().addMenu("File")
         quit_action = create_action(self, "Quit",
                                     shortcut="Ctrl+Q",
-                                    icon=get_std_icon("DialogCloseButton"),
+                                    #icon=get_std_icon("DialogCloseButton"),
                                     tip="Quit application",
                                     triggered=self.close)
         add_actions(file_menu, (quit_action, ))
@@ -328,7 +315,31 @@ class Window(QMainWindow):
         #---guiqwt plot manager
         self.manager = PlotManager(self)
         #---
-
+        
+        
+        # Create the console widget
+        font = QFont("Courier new")
+        font.setPointSize(12)
+        ns = {'win': self, 'widget': central_widget}
+        msg = "Try for example: widget.set_text('foobar') or win.close()"
+        # Note: by default, the internal shell is multithreaded which is safer 
+        # but not compatible with graphical user interface creation.
+        # For example, if you need to plot data with Matplotlib, you will need 
+        # to pass the option: multithreaded=False
+        self.console = cons = InternalShell(self, namespace=ns, message=msg)
+        
+        # Setup the console widget
+        cons.set_font(font)
+        cons.set_codecompletion_auto(True)
+        cons.set_calltips(True)
+        cons.setup_calltips(size=600, font=font)
+        cons.setup_completion(size=(300, 100), font=font)
+        console_dock = QDockWidget("Console", self)
+        console_dock.setWidget(cons)
+        
+        # Add the console widget to window as a dockwidget
+        self.addDockWidget(Qt.BottomDockWidgetArea, console_dock)
+        
     def add_newData(self):
         if self.importData.dataset.edit():
             self.importData.get()
@@ -358,6 +369,9 @@ class Window(QMainWindow):
         self.manager.register_all_curve_tools()
         #---
         
+    def closeEvent(self, event):
+        self.console.exit_interpreter()
+        event.accept()       
 
 def main():
     """Testing this simple Qt/guiqwt example"""
@@ -374,7 +388,7 @@ def main():
     #---
     
     win.show()
-    sys.exit(app.exec_())
+    app.exec_()
         
         
 if __name__ == '__main__':

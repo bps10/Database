@@ -46,7 +46,7 @@ def wavefilter(data, maxlevel = 6):
         # Destroy the approximation coefficients
         c[0][:] = 0
         # Reconstruct the signal and save it
-        fdata[i,:] = pywt.waverec(c, wname)[0]
+        fdata[i,:] = pywt.waverec(c, wname)
         
     if fdata.shape[0] == 1:
         return fdata.ravel() # If the signal is 1D, return a 1D array
