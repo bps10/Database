@@ -1,10 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright © 2011 Pierre Raybaut
-# Licensed under the terms of the MIT License
-# (see spyderlib/__init__.py for details)
 
-"""Create a stand-alone executable"""
 
 # -*- coding: utf-8 -*-
 #
@@ -30,6 +24,10 @@ def create_executable():
                script="guiMain.pyw", target_name="Database.exe")
     spyderlib.add_to_distribution(dist)
     #dist.add_modules('matplotlib')  # Uncomment if you need matplotlib
+    dist.add_modules('guidata')
+    dist.add_modules('guiqwt')
+    dist.add_modules('scipy.io')
+    dist.add_modules('spyderlib')
     dist.excludes += ['IPython']
     # Building executable
     dist.build('cx_Freeze')

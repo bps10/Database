@@ -1,5 +1,5 @@
 #import scipy as sp
-import scipy.io as sio
+from scipy.io import loadmat
 import numpy as np
 import glob as glob
 import git as git
@@ -81,11 +81,11 @@ class Database():
 
         if Directory == None:
             
-            self.NeuronData = sio.loadmat(Directory + '/' + FileName + '.mat' )
+            self.NeuronData = loadmat(Directory + '/' + FileName + '.mat' )
         
         else:
             
-            self.NeuronData = sio.loadmat(Directory + '/' + FileName + '.mat')
+            self.NeuronData = loadmat(Directory + '/' + FileName + '.mat')
 
     def getAllFiles(self, Directory, suffix = None, subdirectories = 1):
         """

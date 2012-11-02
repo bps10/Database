@@ -9,8 +9,7 @@ from guidata.dataset.qtwidgets import DataSetShowGroupBox
 from guidata.qt.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                               QMainWindow, QLineEdit, QTreeWidget, QTreeWidgetItem, 
                               QCheckBox, QSpacerItem, QLabel, QFont, QDockWidget )
-from guidata.qt.QtCore import (SIGNAL, QAbstractListModel, QModelIndex, QVariant, 
-                               Qt)
+from guidata.qt.QtCore import (SIGNAL, Qt)
 from guidata.dataset.dataitems import StringItem, DirectoryItem
 from guidata.dataset.datatypes import DataSet
 from guidata.qthelpers import create_action, add_actions #, get_std_icon
@@ -39,13 +38,13 @@ class FilterTestWidget(QWidget):
     x, y: NumPy arrays
     func: function object (the signal filter to be tested)
     """
-    def __init__(self, parent, func):
+    def __init__(self, parent):
         QWidget.__init__(self, parent)
+        
         self.data = Dbase()
         self.y = np.arange(0,100) #self.data.Query()
         self.x = np.arange(0,100) #np.arange(0, len(self.y))
         self.setMinimumSize(600, 650)
-        self.func = func
         #---guiqwt related attributes:
         self.plot = None
         self.curve_item = None
@@ -234,27 +233,7 @@ class databaseListModel(QTreeWidget):
         self.constructTree()
         self.update()
             
-        '''
-        print self.neuronName
-        print self.epochName
-        print self.dataName
-        '''
-        
-class MyListModel(QAbstractListModel): 
-    def __init__(self, datain, parent=None, *args): 
-        """ datain: a list where each item is a row
-        """
-        QAbstractListModel.__init__(self, parent, *args) 
-        self.listdata = datain
- 
-    def rowCount(self, parent=QModelIndex()): 
-        return len(self.listdata) 
- 
-    def data(self, index, role): 
-        if index.isValid() and role == Qt.DisplayRole:
-            return QVariant(self.listdata[index.row()])
-        else: 
-            return QVariant()
+
             
 class Dbase():
     def __init__(self):
@@ -290,6 +269,7 @@ class Window(QMainWindow):
         QMainWindow.__init__(self)
         self.setWindowTitle("Neuron Database")
         #self.setWindowIcon(get_icon('guiqwt.png'))
+        self.setAttribute(Qt.WA_DeleteOnClose,True)
         
         file_menu = self.menuBar().addMenu("File")
         quit_action = create_action(self, "Quit",
@@ -350,10 +330,11 @@ class Window(QMainWindow):
                             str(self.importData.dataset.Directory))
                             
         
-    def add_plot(self, func, title):
-        widget = FilterTestWidget(self, func)
+    def add_plot(self, title):
+        widget = FilterTestWidget(self)
         widget.setup_widget(title)
         self.centralWidget().layout().addWidget(widget)
+        
         #---Register plot to manager
         
         self.manager.add_plot(widget.plot)
@@ -381,14 +362,14 @@ def main():
     win = Window()
     
 
-    win.add_plot(None, "1")
-    win.add_plot(None, "2")
+    win.add_plot( "1")
+    win.add_plot( "2")
     #---Setup window
     win.setup_window()
     #---
     
     win.show()
-    app.exec_()
+    return app.exec_()
         
         
 if __name__ == '__main__':
