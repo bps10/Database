@@ -136,7 +136,7 @@ class Database():
         
         self.CreateGroup(FileName, NeuronName)
 
-        
+        print 'Importing data, please wait ... '
 
         ## Get meta data.
 

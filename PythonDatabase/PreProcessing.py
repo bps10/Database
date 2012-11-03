@@ -8,8 +8,6 @@ Created on Thu Nov 01 12:19:20 2012
 import numpy as np
 
 
-
-
 def wavefilter(data, maxlevel = 6):
     """
     This function requires that the NumPy and PyWavelet packages
@@ -40,7 +38,8 @@ def wavefilter(data, maxlevel = 6):
     fdata = np.empty((numwires, datalength))
     for i in range(numwires):
         # Decompose the signal
-
+        print 'processing data, please wait ... '
+        
         c = pywt.wavedec(data[i,:], wname, level=maxlevel)
 
         # Destroy the approximation coefficients

@@ -16,7 +16,7 @@ from guidata.qthelpers import create_action, add_actions #, get_std_icon
 
 # user defined imports
 import Database as Db
-import PreProcessing as pp
+import Preprocessing as pp
 
 # general
 import numpy as np
@@ -159,35 +159,59 @@ class FilterTestWidget(QWidget):
         '''
         
         index = self.databaseScroll.currentIndex() 
-        #database = index.parent().parent().parent().row()
-        neuron = index.parent().parent().row()
-        epoch = index.parent().row()
-        data = index.row()
-        #print neuron, epoch, data
+
         if index.column() == 3:
-            #self.query_database()
+            neuron = index.parent().parent().row()
+            epoch = index.parent().row()
+            data = index.row()
+
             try:
-                #print 'here'
+
                 n= self.databaseScroll.neuronName[neuron]
                 e = self.databaseScroll.epochName[epoch]
                 d = self.databaseScroll.dataName[data] # account for git dataName
-                #print n, e, d
+
                 self.y = self.data.Query(NeuronName = n, Epoch = e, DataName = d)
-                self.x = np.arange(0, len(self.y))
-                self.update_curve()
+                
+                if self.y.shape[0] > 1:
+                    self.x = np.arange(0, len(self.y))
+                    self.update_curve()
+                
+                if self.y.shape[0] == 1:
+                    print d, ': ', self.y[0]
+                    
             except :
+                
+                #if data < 0:
+                #    print 'could not update plot'
+                    
                 pass
+        
+        if index.column() == 4:
+            neuron = index.parent().parent().parent().row()
+            epoch = index.parent().parent().row()
+            data = index.parent().row()
+            param = index.row()
             
+            n= self.databaseScroll.neuronName[neuron]
+            e = self.databaseScroll.epochName[epoch]
+            d = self.databaseScroll.dataName[data] # account for git dataName
+            p = self.databaseScroll.paramName[param]
+            query =  self.data.Query(NeuronName = n, Epoch = e, 
+                                     DataName = d + '.' + p)[0]
+            print ' '
+            print p, ': ', query
+
         
 
 class databaseListModel(QTreeWidget):
     def __init__(self):
         QTreeWidget.__init__(self)
         #self.widget = QTreeWidget(self)
-        header = QTreeWidgetItem(["Database","Neuron","Epoch","Data"])
-
+        header = QTreeWidgetItem(["Database","Neuron","Epoch","Data", 
+                                  "Parameters"])
         self.setHeaderItem(header)   
-        #Another alternative is setHeaderLabels(["Tree","First",...])
+
         self.Db = Dbase()
         try :
             self.constructTree()
@@ -201,9 +225,15 @@ class databaseListModel(QTreeWidget):
         self.neuronName = []
         self.epochName = []
         self.dataName = []
+
+        self.paramName = []
+        
+        '''        
         self.neurons = []
-        self.singleEpoch = []
-        self.singleData = []
+        singleEpoch = []
+        singleData = []
+        singleParam = []
+        '''
         
         top = self.Db.GetTree()      
         for countNeuro,neuron in enumerate(top):
@@ -228,6 +258,15 @@ class databaseListModel(QTreeWidget):
                     
                     if countEpoch == 1:
                         self.dataName.append(data)
+                        
+                    if data == 'params':
+                        paramTree = self.Db.GetTree( neuron + '.' + epoch + '.' + data)
+                        for countParam,param in enumerate(paramTree):
+                            singleParam = QTreeWidgetItem(singleData)
+                            singleParam.setText(4, param)
+                            
+                            if countEpoch == 1:
+                                self.paramName.append(param)
         
     def refreshTree(self): 
         self.constructTree()
@@ -356,6 +395,7 @@ class Window(QMainWindow):
 
 def main():
     """Testing this simple Qt/guiqwt example"""
+    
     from guidata.qt.QtGui import QApplication
     
     app = QApplication([])
