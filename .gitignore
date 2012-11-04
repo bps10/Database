@@ -2,5 +2,11 @@
 bin
 obj
 
+# Python
+.pyc
+
+# executables
+.exe
+
 # mstest test results
 TestResults
