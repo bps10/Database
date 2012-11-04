@@ -55,12 +55,13 @@ class Database():
         return eval(loc)
 
 
-    def RemoveGroup(self, GroupName):
+    def RemoveNeuron(self, NeuronName):
         	
         decision = raw_input( 'Are you absolutely sure you want to delete this group permenently? (y/n): ')
         if decision.lower() == 'y' or decision.lower() == 'yes':
-            eval('self.file.root.' + GroupName + '._f_remove()')
-            print '{0} successfully deleted'.format(GroupName)
+            deleteHandle = self.file.removeNode
+            deleteHandle( '/' + NeuronName, recursive=1)
+            print '{0} successfully deleted'.format(NeuronName)
         else:
             print 'Ok, nothing changed.'
 
@@ -121,6 +122,9 @@ class Database():
         self.CreateGroup(NeuronName)
 
         for i in range(0, self.DirFiles.shape[0] ):
+            
+            print 'Importing data, please wait ... '
+
             FileName = self.DirFiles[i][-12:-4]  # select only 'epochXXX.mat'
 
             self.OpenMatlabData(FileName, Directory, NeuronName)
@@ -136,11 +140,15 @@ class Database():
         
         self.CreateGroup(FileName, NeuronName)
 
-        print 'Importing data, please wait ... '
-
         ## Get meta data.
-
-        self.AddData2Database('fileComment', np.array([self.NeuronData['fileComment'][0]],dtype=str), NeuronName + '.' + FileName)
+        
+        try :
+            self.AddData2Database('fileComment', np.array([self.NeuronData['fileComment'][0]],dtype=str), 
+                                  NeuronName + '.' + FileName)
+        except IndexError:
+             self.AddData2Database('fileComment', np.array(['none entered'], dtype = str),
+                                   NeuronName + '.' + FileName)           
+                
 
         PARAMS = np.array(['binRate', 'numSegments', 'si', 'clockstep', 'sampleInterval', 'sampleRate', 'ampMode', 'ampGain',
                            'rawData', 'monitorData', 'frameRate', 'preSamples', 'postSamples', 'stimSamples', 'time', 'epochsize',
@@ -152,22 +160,42 @@ class Database():
 
             try:
                 if name != 'spikeTimes':
-                    Data = self.NeuronData['data'][name][0][0][0]
+                    
+                    try:
+                        
+                        Data = self.NeuronData['data'][name][0][0][0]
+                        
+                    except ValueError:
+                        
+                        Data = np.array(['none entered'], dtype = str)
+                        STRINGS[i] = 0
+                        
                 else:
-                    Data = self.NeuronData['data'][name][0][0][0][0][0]
-                    if Data.shape[0] == 0:
+                    
+                    try:
+                        
+                        Data = self.NeuronData['data'][name][0][0][0][0][0]
+                        
+                    except ValueError:
                         Data = np.array(['none entered'], dtype = str)
                         STRINGS[i] = 0
 
-            except:
+            except IndexError:
 
                 Data = np.array(['none entered'], dtype = str)
                 STRINGS[i] = 0
 
             if STRINGS[i] == 0:
- 
-                self.AddData2Database(name, Data, NeuronName + '.' + FileName)
-
+                
+                try:
+                    
+                    self.AddData2Database(name, Data, NeuronName + '.' + FileName)
+                    
+                except ValueError: # for unicode cases.
+                
+                    self.AddData2Database(name, np.array([ Data ], dtype=str), 
+                                              NeuronName + '.' + FileName)
+                                              
             if STRINGS[i] == 1:
 
                 self.AddData2Database(name, np.array([ Data ], dtype=str), NeuronName + '.' + FileName)
@@ -183,8 +211,11 @@ class Database():
         for i, name in enumerate(PARAMS):
 
             try:
+                
                 Data = self.NeuronData['data']['params'][0][0][0][name][0][0]
-            except:
+                
+            except ValueError:
+                
                 Data = np.array(['none entered'], dtype = str)
                 STRINGS[i] = 0
 

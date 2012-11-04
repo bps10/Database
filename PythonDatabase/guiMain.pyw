@@ -12,7 +12,7 @@ from guidata.qt.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
 from guidata.qt.QtCore import (SIGNAL, Qt)
 from guidata.dataset.dataitems import StringItem, DirectoryItem
 from guidata.dataset.datatypes import DataSet
-from guidata.qthelpers import create_action, add_actions #, get_std_icon
+from guidata.qthelpers import create_action, add_actions, get_std_icon
 
 # user defined imports
 import Database as Db
@@ -26,7 +26,7 @@ import numpy as np
 from guiqwt.curve import CurvePlot
 from guiqwt.plot import PlotManager
 from guiqwt.builder import make
-#from guidata.configtools import get_icon
+from guidata.configtools import get_icon
 #---
 from spyderlib.widgets.internalshell import InternalShell
 
@@ -228,13 +228,6 @@ class databaseListModel(QTreeWidget):
 
         self.paramName = []
         
-        '''        
-        self.neurons = []
-        singleEpoch = []
-        singleData = []
-        singleParam = []
-        '''
-        
         top = self.Db.GetTree()      
         for countNeuro,neuron in enumerate(top):
             
@@ -275,10 +268,10 @@ class databaseListModel(QTreeWidget):
 
             
 class Dbase():
-    def __init__(self):
+    def __init__(self, DBaseName = 'NeuronData'):
         
         self.Data = Db.Database()
-        self.Data.OpenDatabase('NeuronData')
+        self.Data.OpenDatabase(DBaseName)
         
     def Query(self, NeuronName = 'Oct0212Bc8', Epoch = 'epoch040', DataName = 'rawData'):
         return self.Data.QueryDatabase( NeuronName, Epoch, DataName)
@@ -296,36 +289,57 @@ class Dbase():
         
         return tree
         
+        
 
 class FindFile(DataSet):
 
     Directory   = DirectoryItem("Directory")
     NeuronName  = StringItem("NeuronName")
+
+class DeleteNeuron(DataSet):
     
+    NeuronName = StringItem("Neuron Name")    
     
 class Window(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
         self.setWindowTitle("Neuron Database")
-        #self.setWindowIcon(get_icon('guiqwt.png'))
+        self.setWindowIcon(get_icon('guiqwt.png'))
         self.setAttribute(Qt.WA_DeleteOnClose,True)
         
         file_menu = self.menuBar().addMenu("File")
         quit_action = create_action(self, "Quit",
                                     shortcut="Ctrl+Q",
-                                    #icon=get_std_icon("DialogCloseButton"),
+                                    icon=get_std_icon("DialogCloseButton"),
                                     tip="Quit application",
                                     triggered=self.close)
-        add_actions(file_menu, (quit_action, ))
+        openDB_action = create_action(self, "Open database",
+                                     shortcut ="Ctrl+D",
+                                     tip ="Open an existing database into scroll area",
+                                     triggered=self.DUD)
+        createDB_action = create_action(self,"Create database",
+                                        shortcut ="Ctrl+N",
+                                        tip ="Create a new database",
+                                        triggered=self.DUD)
+        
+        add_actions(file_menu, (quit_action, openDB_action, createDB_action))
         
         # Edit menu
         self.importData = DataSetShowGroupBox("Neuron Data",
                                              FindFile, comment='')
+        
+        self.deleteNeuron = DataSetShowGroupBox("Delete Neuron Data",
+                                                DeleteNeuron, comment='')
         #self.x = np.arange(0, len(self.y))
         edit_menu = self.menuBar().addMenu("Edit")
-        editparam1_action = create_action(self, "Add dataset",
+        editparam1_action = create_action(self, "Import dataset",
+                                          shortcut ="Ctrl+I",
+                                          tip ="Import data from matlab structure",
                                           triggered=self.add_newData)
-        add_actions(edit_menu, (editparam1_action, ))
+        deleteNode_action = create_action(self, "Delete neuron",
+                                          tip ="Delete neuron from database",
+                                          triggered=self.delete_Neuron)
+        add_actions(edit_menu, (editparam1_action, deleteNode_action))
         
         hlayout = QHBoxLayout()
         central_widget = QWidget(self)
@@ -336,7 +350,7 @@ class Window(QMainWindow):
         #---
         
         
-        # Create the console widget
+        # Create the console widgetDBaseName
         font = QFont("Courier new")
         font.setPointSize(12)
         ns = {'win': self, 'widget': central_widget}
@@ -361,13 +375,34 @@ class Window(QMainWindow):
         
     def add_newData(self):
         if self.importData.dataset.edit():
+            
             self.importData.get()
             print str(self.importData.dataset.NeuronName)
             print str(self.importData.dataset.Directory)
             addData = Dbase()
             addData.AddData(str(self.importData.dataset.NeuronName), 
                             str(self.importData.dataset.Directory))
-                            
+    
+    def DUD(self):
+        print 'sorry, option not yet available'
+                        
+    def delete_Neuron(self):
+        if self.deleteNeuron.dataset.edit():
+            print 'sorry, not yet active'
+            '''
+            try:
+                #self.deleteNeuron.get()
+                delData = Db.Database()
+                delData.OpenDatabase('NeuronData')
+                print str(self.deleteNeuron.dataset.NeuronName)
+                delData.RemoveNeuron(str(self.deleteNeuron.dataset.NeuronName))
+                print 'successfully deleted', self.deleteNeuron.dataset.NeuronName
+                
+            except:
+                
+                print 'sorry, could not delete. please make sure data exists.'
+            '''
+        
         
     def add_plot(self, title):
         widget = FilterTestWidget(self)
@@ -402,8 +437,8 @@ def main():
     win = Window()
     
 
-    win.add_plot( "1")
-    win.add_plot( "2")
+    win.add_plot("1")
+    win.add_plot("2")
     #---Setup window
     win.setup_window()
     #---
