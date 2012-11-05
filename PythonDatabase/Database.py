@@ -55,16 +55,24 @@ class Database():
         return eval(loc)
 
 
-    def RemoveNeuron(self, NeuronName):
-        	
-        decision = raw_input( 'Are you absolutely sure you want to delete this group permenently? (y/n): ')
-        if decision.lower() == 'y' or decision.lower() == 'yes':
-            deleteHandle = self.file.removeNode
-            deleteHandle( '/' + NeuronName, recursive=1)
-            print '{0} successfully deleted'.format(NeuronName)
-        else:
-            print 'Ok, nothing changed.'
+    def RemoveNeuron(self, NeuronName, option = 0):
+        
+        if option == 0:
+            decision = raw_input( 'Are you absolutely sure you want to delete this group permenently? (y/n): ')
+            if decision.lower() == 'y' or decision.lower() == 'yes':
+                deleteHandle = self.file.removeNode
+                deleteHandle( '/' + NeuronName, recursive=1)
+                self.file.flush()
+                print '{0} successfully deleted'.format(NeuronName)
+            else:
+                print 'Ok, nothing changed.'
 
+        if option == 1:
+
+            deleteHandle = self.file.removeNode
+            print 'hang tight. deleting in process...'
+            deleteHandle( '/' + NeuronName, recursive=1)        
+            self.file.flush()
 
     def RemoveChild(self, GroupName, ChildName):
         	
@@ -120,10 +128,11 @@ class Database():
         #self.OpenDatabase(Name + '.h5')
         self.getAllFiles(Directory)
         self.CreateGroup(NeuronName)
-
+        
+        print 'Importing data, please wait ... '
         for i in range(0, self.DirFiles.shape[0] ):
             
-            print 'Importing data, please wait ... '
+            
 
             FileName = self.DirFiles[i][-12:-4]  # select only 'epochXXX.mat'
 

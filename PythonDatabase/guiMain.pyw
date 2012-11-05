@@ -167,20 +167,25 @@ class FilterTestWidget(QWidget):
 
             try:
 
-                n= self.databaseScroll.neuronName[neuron]
-                e = self.databaseScroll.epochName[epoch]
+                n = self.databaseScroll.neuronName[neuron]
+                
+                epochs = self.data.GetTree(str(n))
+                e = epochs[epoch]
                 d = self.databaseScroll.dataName[data] # account for git dataName
 
-                self.y = self.data.Query(NeuronName = n, Epoch = e, DataName = d)
+                query = self.data.Query(NeuronName = n, Epoch = e, DataName = d)
                 
-                if self.y.shape[0] > 1:
+                if query.shape[0] > 1:
+                    
+                    self.y = query
                     self.x = np.arange(0, len(self.y))
                     self.update_curve()
                 
-                if self.y.shape[0] == 1:
-                    print d, ': ', self.y[0]
+                if query.shape[0] == 1:
+                    print ' '
+                    print d, ': ', query[0]
                     
-            except :
+            except ValueError:
                 
                 #if data < 0:
                 #    print 'could not update plot'
@@ -193,8 +198,11 @@ class FilterTestWidget(QWidget):
             data = index.parent().row()
             param = index.row()
             
-            n= self.databaseScroll.neuronName[neuron]
-            e = self.databaseScroll.epochName[epoch]
+            n = self.databaseScroll.neuronName[str(n)]
+            
+            epochs = self.data.GetTree(neuron)
+            e = epochs[epoch]
+            
             d = self.databaseScroll.dataName[data] # account for git dataName
             p = self.databaseScroll.paramName[param]
             query =  self.data.Query(NeuronName = n, Epoch = e, 
@@ -223,9 +231,7 @@ class databaseListModel(QTreeWidget):
         root.setText(0, "Neuron Data")
         
         self.neuronName = []
-        self.epochName = []
         self.dataName = []
-
         self.paramName = []
         
         top = self.Db.GetTree()      
@@ -242,7 +248,6 @@ class databaseListModel(QTreeWidget):
                 singleEpoch = QTreeWidgetItem(neurons) 
                 singleEpoch.setText(2, epoch)
                 
-                self.epochName.append(epoch)
                 
                 epochTree = self.Db.GetTree( neuron + '.' + epoch)
                 for countData,data in enumerate(epochTree):
@@ -296,9 +301,11 @@ class FindFile(DataSet):
     Directory   = DirectoryItem("Directory")
     NeuronName  = StringItem("NeuronName")
 
+
 class DeleteNeuron(DataSet):
     
     NeuronName = StringItem("Neuron Name")    
+    
     
 class Window(QMainWindow):
     def __init__(self):
@@ -382,26 +389,33 @@ class Window(QMainWindow):
             addData = Dbase()
             addData.AddData(str(self.importData.dataset.NeuronName), 
                             str(self.importData.dataset.Directory))
+            print 'data import complete. please refresh list.'
     
     def DUD(self):
         print 'sorry, option not yet available'
+    
+    def create_Database(self):
+        pass
+    
+    def open_Database(self):
+        pass
                         
     def delete_Neuron(self):
         if self.deleteNeuron.dataset.edit():
-            print 'sorry, not yet active'
-            '''
-            try:
+            print 'here'
+            
+            try: 
                 #self.deleteNeuron.get()
-                delData = Db.Database()
-                delData.OpenDatabase('NeuronData')
-                print str(self.deleteNeuron.dataset.NeuronName)
-                delData.RemoveNeuron(str(self.deleteNeuron.dataset.NeuronName))
+                rmData = Dbase()
+                neuron = str(self.deleteNeuron.dataset.NeuronName)
+                rmData.Data.RemoveNeuron(neuron, option = 1)
+                rmData.Data.CloseDatabase()
                 print 'successfully deleted', self.deleteNeuron.dataset.NeuronName
                 
-            except:
+            except :
                 
                 print 'sorry, could not delete. please make sure data exists.'
-            '''
+            
         
         
     def add_plot(self, title):
