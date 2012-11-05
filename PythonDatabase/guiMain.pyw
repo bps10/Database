@@ -10,7 +10,7 @@ from guidata.qt.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                               QMainWindow, QLineEdit, QTreeWidget, QTreeWidgetItem, 
                               QCheckBox, QSpacerItem, QLabel, QFont, QDockWidget )
 from guidata.qt.QtCore import (SIGNAL, Qt)
-from guidata.dataset.dataitems import StringItem, DirectoryItem
+from guidata.dataset.dataitems import StringItem, DirectoryItem, FileOpenItem
 from guidata.dataset.datatypes import DataSet
 from guidata.qthelpers import create_action, add_actions, get_std_icon
 
@@ -44,7 +44,7 @@ class FilterTestWidget(QWidget):
         self.data = Dbase()
         self.yData = np.arange(0,100) #self.data.Query()
         self.xData = np.arange(0,100) #np.arange(0, len(self.yData))
-        self.setMinimumSize(600, 650)
+        self.setMinimumSize(700, 600)
         #---guiqwt related attributes:
         self.plot = None
         self.curve_item = None
@@ -169,27 +169,24 @@ class FilterTestWidget(QWidget):
 
                 n = self.databaseScroll.neuronName[neuron]
                 
-                epochs = self.data.GetTree(str(n))
+                epochs = self.data.GetTree(n)
                 e = epochs[epoch]
                 d = self.databaseScroll.dataName[data] # account for git dataName
 
-                query = self.data.Query(NeuronName = n, Epoch = e, DataName = d)
+                if d != 'params':
+                    query = self.data.Query(NeuronName = n, Epoch = e, DataName = d)
                 
-                if query.shape[0] > 1:
+                    if query.shape[0] > 1:
+                        
+                        self.yData = query
+                        self.xData = np.arange(0, len(self.yData))
+                        self.update_curve()
                     
-                    self.yData = query
-                    self.xData = np.arange(0, len(self.yData))
-                    self.update_curve()
-                
-                if query.shape[0] == 1:
-                    print ' '
-                    print d, ': ', query[0]
+                    if query.shape[0] == 1:
+                        print ' '
+                        print d, ': ', query[0]
                     
             except ValueError:
-                
-                #if data < 0:
-                #    print 'could not update plot'
-                    
                 pass
         
         if index.column() == 4:
@@ -198,9 +195,9 @@ class FilterTestWidget(QWidget):
             data = index.parent().row()
             param = index.row()
             
-            n = self.databaseScroll.neuronName[str(n)]
+            n = self.databaseScroll.neuronName[neuron]
             
-            epochs = self.data.GetTree(neuron)
+            epochs = self.data.GetTree(n)
             e = epochs[epoch]
             
             d = self.databaseScroll.dataName[data] # account for git dataName
@@ -277,7 +274,12 @@ class Dbase():
     def __init__(self, DBaseName = 'NeuronData'):
         
         self.Data = Db.Database()
+            
         self.Data.OpenDatabase(DBaseName)
+            
+        if self.Data.file == []:
+            
+            self.Data.CreateDatabase(DBaseName)
         
     def Query(self, NeuronName = 'Oct0212Bc8', Epoch = 'epoch040', DataName = 'rawData'):
         return self.Data.QueryDatabase( NeuronName, Epoch, DataName)
@@ -303,9 +305,17 @@ class FindFile(DataSet):
     NeuronName  = StringItem("NeuronName")
 
 
-class DeleteNeuron(DataSet):
+class SingleFileItem(DataSet):
     
-    NeuronName = StringItem("Neuron Name")    
+    name    = FileOpenItem("Database")
+    
+
+
+class SingleLineStringItem(DataSet):
+    
+    name = StringItem("Neuron Name")    
+    
+
     
     
 class Window(QMainWindow):
@@ -314,6 +324,16 @@ class Window(QMainWindow):
         self.setWindowTitle("Neuron Database")
         self.setWindowIcon(get_icon('guiqwt.png'))
         self.setAttribute(Qt.WA_DeleteOnClose,True)
+        
+        # file menu
+        self.openDBase = DataSetShowGroupBox("Open existing h5 database",
+                                             SingleFileItem, 
+                                             comment='Select the h5 database to open')        
+                                             
+        self.newDBase = DataSetShowGroupBox("Create new h5 database",
+                                             SingleLineStringItem, 
+                                             comment='Enter name for new h5 database')   
+                                             
         
         file_menu = self.menuBar().addMenu("File")
         quit_action = create_action(self, "Quit",
@@ -324,11 +344,11 @@ class Window(QMainWindow):
         openDB_action = create_action(self, "Open database",
                                      shortcut ="Ctrl+D",
                                      tip ="Open an existing database into scroll area",
-                                     triggered=self.DUD)
-        createDB_action = create_action(self,"Create database",
+                                     triggered=self.open_Database)
+        createDB_action = create_action(self,"New database",
                                         shortcut ="Ctrl+N",
                                         tip ="Create a new database",
-                                        triggered=self.DUD)
+                                        triggered=self.create_Database)
         
         add_actions(file_menu, (quit_action, openDB_action, createDB_action))
         
@@ -337,8 +357,9 @@ class Window(QMainWindow):
                                              FindFile, comment='')
         
         self.deleteNeuron = DataSetShowGroupBox("Delete Neuron Data",
-                                                DeleteNeuron, comment='')
-        #self.xData = np.arange(0, len(self.yData))
+                                                SingleLineStringItem, comment='')
+                                                
+
         edit_menu = self.menuBar().addMenu("Edit")
         editparam1_action = create_action(self, "Import dataset",
                                           shortcut ="Ctrl+I",
@@ -394,12 +415,23 @@ class Window(QMainWindow):
     
     def DUD(self):
         print 'sorry, option not yet available'
+
     
     def create_Database(self):
-        pass
-    
+        if self.newDBase.dataset.edit():
+            newDBname = self.newDBase.dataset.name
+            newDB = Dbase(newDBname)
+            print '{0} database created. however, ... '.format(newDB)
+            print 'functionality still not complete.'
+
+            
     def open_Database(self):
-        pass
+        if self.openDBase.dataset.edit():
+            loadedDBname = self.openDBase.dataset.name
+            loadedDbase = Dbase(loadedDBname)
+            loadedDbase.GetTree()
+            print '{0} database created. however, ... '.format(loadedDBname + '.h5')
+            print 'functionality still not complete.'
                         
     def delete_Neuron(self):
         if self.deleteNeuron.dataset.edit():
@@ -408,10 +440,10 @@ class Window(QMainWindow):
             try: 
                 #self.deleteNeuron.get()
                 rmData = Dbase()
-                neuron = str(self.deleteNeuron.dataset.NeuronName)
+                neuron = str(self.deleteNeuron.dataset.name)
                 rmData.Data.RemoveNeuron(neuron, option = 1)
                 rmData.Data.CloseDatabase()
-                print 'successfully deleted', self.deleteNeuron.dataset.NeuronName
+                print 'successfully deleted', self.deleteNeuron.dataset.name
                 
             except :
                 
@@ -453,7 +485,7 @@ def main():
     
 
     win.add_plot("1")
-    win.add_plot("2")
+    #win.add_plot("2")
     #---Setup window
     win.setup_window()
     #---

@@ -43,9 +43,17 @@ class Database():
 
 
     def OpenDatabase(self, DatabaseName):
-        
-        self.file = tables.openFile(DatabaseName + '.h5', mode = "a")
-        print '{0} database opened'.format(DatabaseName)
+        self.file = []
+        try:
+            test = tables.isHDF5File(DatabaseName + '.h5')
+
+            if test:
+                self.file = tables.openFile(DatabaseName + '.h5', mode = "a")
+                print '{0} database opened'.format(DatabaseName)
+                
+        except IOError:
+
+            print '{0} does not exist'.format(DatabaseName)
 
 
     def QueryDatabase(self, NeuronName, GroupName, DataName):
@@ -125,11 +133,12 @@ class Database():
         if GitDirectory == None:
             GitDirectory = os.getcwd()
             
+        print 'Importing data, please wait ... '    
         #self.OpenDatabase(Name + '.h5')
         self.getAllFiles(Directory)
         self.CreateGroup(NeuronName)
         
-        print 'Importing data, please wait ... '
+        
         for i in range(0, self.DirFiles.shape[0] ):
             
             
@@ -154,7 +163,7 @@ class Database():
         try :
             self.AddData2Database('fileComment', np.array([self.NeuronData['fileComment'][0]],dtype=str), 
                                   NeuronName + '.' + FileName)
-        except IndexError:
+        except (IndexError, ValueError):
              self.AddData2Database('fileComment', np.array(['none entered'], dtype = str),
                                    NeuronName + '.' + FileName)           
                 
@@ -202,8 +211,8 @@ class Database():
                     
                 except ValueError: # for unicode cases.
                 
-                    self.AddData2Database(name, np.array([ Data ], dtype=str), 
-                                              NeuronName + '.' + FileName)
+                    Data = np.array(['none entered'], dtype = str)
+                    STRINGS[i] = 1
                                               
             if STRINGS[i] == 1:
 
@@ -229,9 +238,15 @@ class Database():
                 STRINGS[i] = 0
 
             if STRINGS[i] == 0:
-
+                
+                try:
                     self.AddData2Database(name, Data, NeuronName + '.' + FileName + '.params')
-
+                    
+                except ValueError:
+                    
+                    Data = np.array(['none entered'], dtype = str)
+                    STRINGS[i] = 1
+                
             if STRINGS[i] == 1:
 
                     self.AddData2Database(name, np.array([ Data ], dtype=str), NeuronName + '.' + FileName + '.params')
@@ -249,6 +264,7 @@ class Database():
             ChildList = eval(foo + '.__members__')
             
         return ChildList
+        
                           
     def Exists(self, FILE, parent = None):
         
