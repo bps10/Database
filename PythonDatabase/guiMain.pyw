@@ -42,8 +42,8 @@ class FilterTestWidget(QWidget):
         QWidget.__init__(self, parent)
         
         self.data = Dbase()
-        self.y = np.arange(0,100) #self.data.Query()
-        self.x = np.arange(0,100) #np.arange(0, len(self.y))
+        self.yData = np.arange(0,100) #self.data.Query()
+        self.xData = np.arange(0,100) #np.arange(0, len(self.yData))
         self.setMinimumSize(600, 650)
         #---guiqwt related attributes:
         self.plot = None
@@ -117,9 +117,9 @@ class FilterTestWidget(QWidget):
         
         if self.wavelet.isChecked():
             try:
-                yData = self.y
+                yData = self.yData
                 waveletSpikes = pp.wavefilter(yData)
-                self.y = waveletSpikes
+                self.yData = waveletSpikes
                 self.update_curve()
             except:
                 print 'Could not compute wave filter'
@@ -132,8 +132,8 @@ class FilterTestWidget(QWidget):
         epochname = str(self.Epoch.displayText())
         dataname = str(self.QueryName.displayText())
         try:
-            self.y = self.data.Query(NeuronName = neuronname, Epoch = epochname, DataName = dataname)
-            self.x = np.arange(0, len(self.y))
+            self.yData = self.data.Query(NeuronName = neuronname, Epoch = epochname, DataName = dataname)
+            self.xData = np.arange(0, len(self.yData))
             self.update_curve()
         except :
             pass
@@ -141,7 +141,7 @@ class FilterTestWidget(QWidget):
     def update_curve(self):
         #---Update curve
 
-        self.curve_item.set_data(self.x, self.y)
+        self.curve_item.set_data(self.xData, self.yData)
         self.plot.replot()
         self.plot.do_autoscale()
         
@@ -177,8 +177,8 @@ class FilterTestWidget(QWidget):
                 
                 if query.shape[0] > 1:
                     
-                    self.y = query
-                    self.x = np.arange(0, len(self.y))
+                    self.yData = query
+                    self.xData = np.arange(0, len(self.yData))
                     self.update_curve()
                 
                 if query.shape[0] == 1:
@@ -267,6 +267,7 @@ class databaseListModel(QTreeWidget):
                                 self.paramName.append(param)
         
     def refreshTree(self): 
+        print 'sorry this option still not working perfectly. close and reopen for best results.'
         self.constructTree()
         self.update()
             
@@ -337,7 +338,7 @@ class Window(QMainWindow):
         
         self.deleteNeuron = DataSetShowGroupBox("Delete Neuron Data",
                                                 DeleteNeuron, comment='')
-        #self.x = np.arange(0, len(self.y))
+        #self.xData = np.arange(0, len(self.yData))
         edit_menu = self.menuBar().addMenu("Edit")
         editparam1_action = create_action(self, "Import dataset",
                                           shortcut ="Ctrl+I",
