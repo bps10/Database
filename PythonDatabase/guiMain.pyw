@@ -10,7 +10,7 @@ from guidata.qt.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                               QMainWindow, QLineEdit, QTreeWidget, QTreeWidgetItem, 
                               QCheckBox, QSpacerItem, QLabel, QFont, QDockWidget )
 from guidata.qt.QtCore import (SIGNAL, Qt)
-from guidata.dataset.dataitems import StringItem, DirectoryItem, FileOpenItem
+from guidata.dataset.dataitems import StringItem, DirectoryItem, FileOpenItem, ChoiceItem
 from guidata.dataset.datatypes import DataSet
 from guidata.qthelpers import create_action, add_actions, get_std_icon
 
@@ -20,6 +20,7 @@ import Preprocessing as pp
 
 # general
 import numpy as np
+import os
 
 #---Import plot widget base class
 from guiqwt.curve import CurvePlot, ItemListWidget, PlotItemList
@@ -40,7 +41,7 @@ class FilterTestWidget(QWidget):
     def __init__(self, parent):
         QWidget.__init__(self, parent)
         
-        self.data = Dbase()
+        self.data = Dbase(DBaseName = None)
         self.y1Data = np.arange(0,100) #self.data.Query()
         self.y2Data = np.arange(0,100)
         self.xData = np.arange(0,100) #np.arange(0, len(self.yData))
@@ -72,13 +73,13 @@ class FilterTestWidget(QWidget):
         """
         #---
         
-        self.Neuron     = QLineEdit("Neuron name")
-        self.Epoch      = QLineEdit("Epoch name")
-        self.QueryName  = QLineEdit("Data selection")
+        #self.Neuron     = QLineEdit("Neuron name")
+        #self.Epoch      = QLineEdit("Epoch name")
+        #self.QueryName  = QLineEdit("Data selection")
         
 
         # create tree
-        self.databaseScroll = databaseListModel()
+        self.databaseScroll = databaseListModel(DBaseName = None)
         
 
         text = QLabel("Preprocess data")
@@ -86,42 +87,44 @@ class FilterTestWidget(QWidget):
         
         # create buttons
         listButton = QPushButton(u"Refresh list")
-        queryButton = QPushButton(u"New Query: %s" % title)
-        processButton = QPushButton(u"run preprocessing")
+        #queryButton = QPushButton(u"New Query: %s" % title)
+        processButton = QPushButton(u"     run preprocessing     ")
         
         self.wavelet = QCheckBox(u"Wavelet")
-        self.noneyet = QCheckBox(u"None Yet")
+        self.waveletThreshold = QLineEdit(u"10")
+        #self.waveletThreshold.maximumWidth(10)
         
+
         # connect user actions with methods:
         self.connect(listButton, SIGNAL('clicked()'), self.but_clicked)
-        self.connect(queryButton, SIGNAL('clicked()'), self.query_database)
+        #self.connect(queryButton, SIGNAL('clicked()'), self.query_database)
         self.connect(processButton, SIGNAL('clicked()'), self.run_preprocess)
         self.connect(self.databaseScroll, SIGNAL("doubleClicked(QModelIndex)"), 
                      self.double_clicked)
 
         vlayout = QVBoxLayout()
         hlayout = QHBoxLayout()
-        h2layout = QHBoxLayout()
-        v2layout = QVBoxLayout()
+        #h2layout = QHBoxLayout()
+        #v2layout = QVBoxLayout()
         
         vlayout.addWidget(self.databaseScroll)
         vlayout.addWidget(listButton)
-        hlayout.addWidget(self.Neuron)
-        hlayout.addWidget(self.Epoch)
-        hlayout.addWidget(self.QueryName)
-        vlayout.addLayout(hlayout)
+        #hlayout.addWidget(self.Neuron)
+        #hlayout.addWidget(self.Epoch)
+        #hlayout.addWidget(self.QueryName)
+        #vlayout.addLayout(hlayout)
         
-        vlayout.addWidget(queryButton)
+        #vlayout.addWidget(queryButton)
         vlayout.addWidget(self.plot)
         vlayout.addSpacerItem(spacer)
         vlayout.addWidget(text)
         
-        v2layout.addWidget(self.wavelet)
-        v2layout.addWidget(self.noneyet)
-        h2layout.addLayout(v2layout)
-        h2layout.addWidget(processButton)        
+        hlayout.addWidget(self.wavelet)
+        hlayout.addWidget(self.waveletThreshold)
+        #h2layout.addLayout(v2layout)
+        hlayout.addWidget(processButton)        
         
-        vlayout.addLayout(h2layout)
+        vlayout.addLayout(hlayout)
         self.setLayout(vlayout)
         
         self.update_curve()
@@ -131,16 +134,22 @@ class FilterTestWidget(QWidget):
         
         if self.wavelet.isChecked():
             try:
-                yData = self.yData
-                waveletSpikes = pp.wavefilter(yData)
-                self.y1Data = waveletSpikes
+                yData = self.y1Data
+                waveletFilt = pp.wavefilter(yData)
+                self.y1Data = waveletFilt
+                
+                thresh = float(self.waveletThreshold.displayText())
+                self.y2Data = self.y1Data > thresh
+                self.y2Data = self.y2Data * max(self.y1Data)
+                print self.y2Data
                 self.update_curve()
-            except:
-                print 'Could not compute wave filter'
+                
+            except ValueError:
+                print 'ValueError. Could not compute wave filter'
                 pass
 
         
-        
+    '''   
     def query_database(self):
         neuronname = str(self.Neuron.displayText())
         epochname = str(self.Epoch.displayText())
@@ -151,10 +160,10 @@ class FilterTestWidget(QWidget):
             self.update_curve()
         except :
             pass
-        
+    '''  
+    
     def update_curve(self):
         #---Update curve
-            
         
         self.curve_item.set_data(self.xData, self.y1Data)
         self.second_curve_item.set_data(self.xData, self.y2Data)
@@ -174,12 +183,15 @@ class FilterTestWidget(QWidget):
         find the neuron with this name, and set the treeviews current item
         '''
         
-        index = self.databaseScroll.currentIndex() 
+        index = self.databaseScroll.currentIndex()
 
         if index.column() == 2:
-
+            root = index.parent().parent().row()
             neuron = index.parent().row()
             epoch = index.row()
+
+            r = self.databaseScroll.DataBasesOpen[root - 1]
+            self.data = Dbase(r, PRINT = 1)
             
             n = self.databaseScroll.neuronName[neuron]
                 
@@ -196,49 +208,70 @@ class FilterTestWidget(QWidget):
                     self.y2Data = min(self.y1Data) * self.spikesDataquery
                 else:
                     self.y2Data = max(self.y1Data) * self.spikesDataquery
-            except :
+            except TypeError:
                 
                 print 'spike data not available.'
                 self.y2Data = self.y1Data
             #self.y2Data = self.spikesDataquery
             self.xData = np.arange(0, len(self.y1Data))
             self.update_curve()
+            self.data.Data.CloseDatabase(PRINT=1)
             
         if index.column() == 3:
+            
+            root = index.parent().parent().parent().row()
             neuron = index.parent().parent().row()
             epoch = index.parent().row()
             data = index.row()
 
             try:
-
-                n = self.databaseScroll.neuronName[neuron]
+                r = self.databaseScroll.DataBasesOpen[root - 1]
+                self.data = Dbase(r, PRINT = 1)
                 
+                n = self.databaseScroll.neuronName[neuron]
+
                 epochs = self.data.GetTree(n)
                 e = epochs[epoch]
                 d = self.databaseScroll.dataName[data] # account for git dataName
-
+                
                 if d != 'params':
-                    query = self.data.Query(NeuronName = n, Epoch = e, DataName = d)
+                    #self.data = Db.Database(DBaseName = root)
+                    query = self.data.Query( NeuronName = n, Epoch = e, DataName = d)
                 
                     if query.shape[0] > 1:
                         
                         self.y1Data = query
+                        
+                        try:
+                            if max(self.y1Data) < 0:
+                                self.y2Data = min(self.y1Data) * self.spikesDataquery
+                            else:
+                                self.y2Data = max(self.y1Data) * self.spikesDataquery
+                        except TypeError:
+                                self.y2Data = self.y1Data
+                         
+                            
                         self.xData = np.arange(0, len(self.y1Data))
                         self.update_curve()
                     
                     if query.shape[0] == 1:
                         print ' '
                         print d, ': ', query[0]
-                    
+                        
+                self.data.Data.CloseDatabase(PRINT=1)
             except ValueError:
                 pass
         
         if index.column() == 4:
+            
+            root = index.parent().parent().parent().parent().row()
             neuron = index.parent().parent().parent().row()
             epoch = index.parent().parent().row()
             data = index.parent().row()
             param = index.row()
-            
+
+            r = self.databaseScroll.DataBasesOpen[root - 1]
+            self.data = Dbase(r, PRINT = 1)           
             n = self.databaseScroll.neuronName[neuron]
             
             epochs = self.data.GetTree(n)
@@ -250,76 +283,96 @@ class FilterTestWidget(QWidget):
                                      DataName = d + '.' + p)[0]
             print ' '
             print p, ': ', query
-
+            self.data.Data.CloseDatabase(PRINT=1)
+            
+            
 class databaseListModel(QTreeWidget):
-    def __init__(self):
+    def __init__(self, DBaseName = None):
         QTreeWidget.__init__(self)
-        #self.widget = QTreeWidget(self)
+        self.DataBasesOpen = []
+        self.DataBasesOpenPath = []
+        
         header = QTreeWidgetItem(["Database","Neuron","Epoch","Data", 
                                   "Parameters"])
         self.setHeaderItem(header)   
 
-        self.Db = Dbase()
-        try :
-            self.constructTree()
-        except :
-            pass
+        self.constructTree(DBname = DBaseName)
+    
+    def constructTree(self, DBname):   
+        if DBname == None:
+            root = QTreeWidgetItem(self)
+            #root.setText(0, [])
         
-    def constructTree(self):        
-        root = QTreeWidgetItem(self)
-        root.setText(0, "Neuron Data")
-        
-        self.neuronName = []
-        self.dataName = []
-        self.paramName = []
-        
-        top = self.Db.GetTree()      
-        for countNeuro,neuron in enumerate(top):
+        else:
+            root = QTreeWidgetItem(self)
+            root.setText(0, DBname[:-3])
+    
+            self.neuronName = []
+            self.dataName = []
+            self.paramName = []
             
-            neurons = QTreeWidgetItem(root) 
-            neurons.setText(1, neuron)
-            
-            self.neuronName.append(neuron)
-
-            neuronTree = self.Db.GetTree(neuron)
-            for countEpoch, epoch in enumerate(neuronTree):
+            self.Db = Dbase(DBname)
+            top = self.Db.GetTree()      
+            for countNeuro,neuron in enumerate(top):
                 
-                singleEpoch = QTreeWidgetItem(neurons) 
-                singleEpoch.setText(2, epoch)
+                neurons = QTreeWidgetItem(root) 
+                neurons.setText(1, neuron)
                 
-                
-                epochTree = self.Db.GetTree( neuron + '.' + epoch)
-                for countData,data in enumerate(epochTree):
-                    singleData = QTreeWidgetItem(singleEpoch) 
-                    singleData.setText(3, data)
+                self.neuronName.append(neuron)
+    
+                neuronTree = self.Db.GetTree(neuron)
+                for countEpoch, epoch in enumerate(neuronTree):
                     
-                    if countEpoch == 1:
-                        self.dataName.append(data)
+                    singleEpoch = QTreeWidgetItem(neurons) 
+                    singleEpoch.setText(2, epoch)
+                    
+                    
+                    epochTree = self.Db.GetTree( neuron + '.' + epoch)
+                    for countData,data in enumerate(epochTree):
+                        singleData = QTreeWidgetItem(singleEpoch) 
+                        singleData.setText(3, data)
                         
-                    if data == 'params':
-                        paramTree = self.Db.GetTree( neuron + '.' + epoch + '.' + data)
-                        for countParam,param in enumerate(paramTree):
-                            singleParam = QTreeWidgetItem(singleData)
-                            singleParam.setText(4, param)
+                        if countEpoch == 1:
+                            self.dataName.append(data)
                             
-                            if countEpoch == 1:
-                                self.paramName.append(param)
-        
-    def refreshTree(self): 
-        print 'sorry this option still not working perfectly. close and reopen for best results.'
-        self.constructTree()
-        self.update()
+                        if data == 'params':
+                            paramTree = self.Db.GetTree( neuron + '.' + epoch + '.' + data)
+                            for countParam,param in enumerate(paramTree):
+                                singleParam = QTreeWidgetItem(singleData)
+                                singleParam.setText(4, param)
+                                
+                                if countEpoch == 1:
+                                    self.paramName.append(param)
+            self.Db.Data.CloseDatabase()
             
+    def refreshTree(self): 
+        for DB in self.DataBasesOpen:
+            self.constructTree(DB)        
+            self.update()
+        print 'sorry this option still glitchy sometimes. close and reopen for best results.'
+        
+    def AppendDatabasesOpen(self, DBname):
+        self.DataBasesOpenPath.append(DBname)
+        self.DataBasesOpen.append(os.path.basename(DBname))
+        print 'databases open: ', self.DataBasesOpen   
+        
+    def GetOpenDatabases(self):
+        return self.DataBasesOpen
+             
+        
 class Dbase():
-    def __init__(self, DBaseName = 'NeuronData'):
+    def __init__(self, DBaseName, PRINT = 0):
         
         self.Data = Db.Database()
-            
-        self.Data.OpenDatabase(DBaseName)
-            
-        if self.Data.file == []:
-            
-            self.Data.CreateDatabase(DBaseName)
+        
+        if DBaseName != None:
+            self.Data.OpenDatabase(DBaseName, PRINT)
+                
+            if self.Data.file == []:
+                if PRINT == 0:
+                    print 'now creating {0} database.'.format(DBaseName + '.h5')
+                    
+                self.Data.CreateDatabase(DBaseName)
         
     def Query(self, NeuronName = 'Oct0212Bc8', Epoch = 'epoch040', DataName = 'rawData'):
         return self.Data.QueryDatabase( NeuronName, Epoch, DataName)
@@ -338,22 +391,36 @@ class Dbase():
         return tree
         
 
-class FindFile(DataSet):
+class FindFiles(DataSet):
 
     Directory   = DirectoryItem("Directory")
     NeuronName  = StringItem("NeuronName")
+    DatabaseName = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
+                                           ("AmacrineCells", "AmacrineCells"),
+                                           ("BipolarCells", "BipolarCells"),
+                                           ("Cones", "Cones")])
 
 
 class SingleFileItem(DataSet):
     
-    name    = FileOpenItem("Database")
+    name = FileOpenItem("Database")
     
 
 
-class SingleLineStringItem(DataSet):
+class CreateNewDatabase(DataSet):
     
-    name = StringItem("Neuron Name")    
+    name = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
+                                   ("AmacrineCells", "AmacrineCells"),
+                                   ("BipolarCells", "BipolarCells"),
+                                   ("Cones", "Cones")])
     
+class DeleteDataItem(DataSet):
+    
+    DatabaseName = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
+                                           ("AmacrineCells", "AmacrineCells"),
+                                           ("BipolarCells", "BipolarCells"),
+                                           ("Cones", "Cones")])
+    name = StringItem("Neuron Name")        
 
     
     
@@ -370,7 +437,7 @@ class Window(QMainWindow):
                                              comment='Select the h5 database to open')        
                                              
         self.newDBase = DataSetShowGroupBox("Create new h5 database",
-                                             SingleLineStringItem, 
+                                             CreateNewDatabase, 
                                              comment='Enter name for new h5 database')   
                                              
         
@@ -393,15 +460,15 @@ class Window(QMainWindow):
         
         # Edit menu
         self.importData = DataSetShowGroupBox("Neuron Data",
-                                             FindFile, comment='')
+                                             FindFiles, comment='')
         
         self.deleteNeuron = DataSetShowGroupBox("Delete Neuron Data",
-                                                SingleLineStringItem, comment='')
+                                                DeleteDataItem, comment='')
                                                 
 
         edit_menu = self.menuBar().addMenu("Edit")
         editparam1_action = create_action(self, "Import dataset",
-                                          shortcut ="Ctrl+I",
+                                          shortcut ="Ctrl+A",
                                           tip ="Import data from matlab structure",
                                           triggered=self.add_newData)
         deleteNode_action = create_action(self, "Delete neuron",
@@ -447,7 +514,8 @@ class Window(QMainWindow):
             self.importData.get()
             print str(self.importData.dataset.NeuronName)
             print str(self.importData.dataset.Directory)
-            addData = Dbase()
+            name = str(self.importData.dataset.DatabaseName)
+            addData = Dbase(DBaseName = name + '.h5')
             addData.AddData(str(self.importData.dataset.NeuronName), 
                             str(self.importData.dataset.Directory))
             print 'data import complete. please refresh list.'
@@ -456,24 +524,24 @@ class Window(QMainWindow):
         if self.newDBase.dataset.edit():
             newDBname = self.newDBase.dataset.name
             newDB = Dbase(newDBname)
-            print '{0} database created. however, ... '.format(newDB)
-            print 'functionality still not complete.'
+            newDB.Data.CloseDatabase()
+            print '{0} database created.'.format(newDBname)
 
             
     def open_Database(self):
         if self.openDBase.dataset.edit():
             loadedDBname = self.openDBase.dataset.name
-            loadedDbase = Dbase(loadedDBname)
-            loadedDbase.GetTree()
-            print '{0} database created. however, ... '.format(loadedDBname + '.h5')
-            print 'functionality still not complete.'
-                        
+            #loadedDbase = Dbase(loadedDBname)
+            self.widget.databaseScroll.AppendDatabasesOpen(loadedDBname)
+            self.widget.databaseScroll.refreshTree()
+            print '{0} database opened.'.format(loadedDBname)
+                    
     def delete_Neuron(self):
         if self.deleteNeuron.dataset.edit():
             
             try: 
                 #self.deleteNeuron.get()
-                rmData = Dbase()
+                rmData = Dbase(self.deleteNeuron.dataset.DBasename)
                 neuron = str(self.deleteNeuron.dataset.name)
                 rmData.Data.RemoveNeuron(neuron, option = 1)
                 rmData.Data.CloseDatabase()
@@ -486,13 +554,13 @@ class Window(QMainWindow):
         
         
     def add_plot(self, title):
-        widget = FilterTestWidget(self)
-        widget.setup_widget(title)
-        self.centralWidget().layout().addWidget(widget)
+        self.widget = FilterTestWidget(self)
+        self.widget.setup_widget(title)
+        self.centralWidget().layout().addWidget(self.widget)
         
         #---Register plot to manager
         
-        self.manager.add_plot(widget.plot)
+        self.manager.add_plot(self.widget.plot)
         #self.manager.add_panel(widget.databaseScroll)
         #self.manager.add_tool()        
         #---

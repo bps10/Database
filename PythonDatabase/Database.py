@@ -42,14 +42,15 @@ class Database():
         ds[:] = Data
 
 
-    def OpenDatabase(self, DatabaseName):
+    def OpenDatabase(self, DatabaseName, PRINT = 0):
         self.file = []
         try:
-            test = tables.isHDF5File(DatabaseName + '.h5')
+            test = tables.isHDF5File(DatabaseName)
 
             if test:
-                self.file = tables.openFile(DatabaseName + '.h5', mode = "a")
-                print '{0} database opened'.format(DatabaseName)
+                self.file = tables.openFile(DatabaseName, mode = "a")
+                if PRINT == 0:
+                    print '{0} database opened'.format(DatabaseName)
                 
         except IOError:
 
@@ -299,7 +300,8 @@ class Database():
         
                 
 
-    def CloseDatabase(self):
+    def CloseDatabase(self, PRINT = 0):
         
         self.file.close()
-        print "database closed"
+        if PRINT == 0:
+            print "database closed"
