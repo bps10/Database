@@ -21,7 +21,6 @@ import Preprocessing as pp
 # general
 import numpy as np
 
-
 #---Import plot widget base class
 from guiqwt.curve import CurvePlot
 from guiqwt.plot import PlotManager
@@ -42,7 +41,8 @@ class FilterTestWidget(QWidget):
         QWidget.__init__(self, parent)
         
         self.data = Dbase()
-        self.yData = np.arange(0,100) #self.data.Query()
+        self.y1Data = np.arange(0,100) #self.data.Query()
+        self.y2Data = np.arange(0,100)*2
         self.xData = np.arange(0,100) #np.arange(0, len(self.yData))
         self.setMinimumSize(700, 600)
         #---guiqwt related attributes:
@@ -53,8 +53,11 @@ class FilterTestWidget(QWidget):
     def setup_widget(self, title):
         #---Create the plot widget:
         self.plot = CurvePlot(self)
-        self.curve_item = make.curve([], [], color='b')
+        self.curve_item = (make.curve([], [], color='b'))
+        self.second_curve_item = (make.curve([], [], color='g'))
+        
         self.plot.add_item(self.curve_item)
+        self.plot.add_item(self.second_curve_item)
         self.plot.set_antialiasing(True)
         #---
         
@@ -132,8 +135,8 @@ class FilterTestWidget(QWidget):
         epochname = str(self.Epoch.displayText())
         dataname = str(self.QueryName.displayText())
         try:
-            self.yData = self.data.Query(NeuronName = neuronname, Epoch = epochname, DataName = dataname)
-            self.xData = np.arange(0, len(self.yData))
+            self.y1Data = self.data.Query(NeuronName = neuronname, Epoch = epochname, DataName = dataname)
+            self.xData = np.arange(0, len(self.y1Data))
             self.update_curve()
         except :
             pass
@@ -141,7 +144,8 @@ class FilterTestWidget(QWidget):
     def update_curve(self):
         #---Update curve
 
-        self.curve_item.set_data(self.xData, self.yData)
+        self.curve_item.set_data(self.xData, self.y1Data)
+        self.second_curve_item.set_data(self.xData, self.y2Data)
         self.plot.replot()
         self.plot.do_autoscale()
         
@@ -160,6 +164,25 @@ class FilterTestWidget(QWidget):
         
         index = self.databaseScroll.currentIndex() 
 
+        if index.column() == 2:
+            print 'here'
+            neuron = index.parent().row()
+            epoch = index.row()
+            
+            n = self.databaseScroll.neuronName[neuron]
+                
+            epochs = self.data.GetTree(n)
+            e = epochs[epoch]
+            
+            
+            
+            rawDataquery = self.data.Query(NeuronName = n, Epoch = e, DataName = 'rawData')
+            spikesDataquery = self.data.Query(NeuronName = n, Epoch = e, DataName = 'spikes')   
+            self.y1Data = rawDataquery
+            self.y2Data = spikesDataquery * -60
+            self.xData = np.arange(0, len(self.y1Data))
+            self.update_curve()
+            
         if index.column() == 3:
             neuron = index.parent().parent().row()
             epoch = index.parent().row()
@@ -178,8 +201,8 @@ class FilterTestWidget(QWidget):
                 
                     if query.shape[0] > 1:
                         
-                        self.yData = query
-                        self.xData = np.arange(0, len(self.yData))
+                        self.y1Data = query
+                        self.xData = np.arange(0, len(self.y1Data))
                         self.update_curve()
                     
                     if query.shape[0] == 1:
@@ -206,8 +229,6 @@ class FilterTestWidget(QWidget):
                                      DataName = d + '.' + p)[0]
             print ' '
             print p, ': ', query
-
-        
 
 class databaseListModel(QTreeWidget):
     def __init__(self):
@@ -268,8 +289,6 @@ class databaseListModel(QTreeWidget):
         self.constructTree()
         self.update()
             
-
-            
 class Dbase():
     def __init__(self, DBaseName = 'NeuronData'):
         
@@ -296,7 +315,6 @@ class Dbase():
             tree = self.Data.GetChildList(NeuronName)
         
         return tree
-        
         
 
 class FindFile(DataSet):
@@ -413,10 +431,6 @@ class Window(QMainWindow):
                             str(self.importData.dataset.Directory))
             print 'data import complete. please refresh list.'
     
-    def DUD(self):
-        print 'sorry, option not yet available'
-
-    
     def create_Database(self):
         if self.newDBase.dataset.edit():
             newDBname = self.newDBase.dataset.name
@@ -435,7 +449,6 @@ class Window(QMainWindow):
                         
     def delete_Neuron(self):
         if self.deleteNeuron.dataset.edit():
-            print 'here'
             
             try: 
                 #self.deleteNeuron.get()
