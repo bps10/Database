@@ -79,7 +79,7 @@ class Database():
         if option == 1:
 
             deleteHandle = self.file.removeNode
-            print 'hang tight. deleting in process...'
+            #print 'hang tight. deleting in process...'
             deleteHandle( '/' + NeuronName, recursive=1)        
             self.file.flush()
 

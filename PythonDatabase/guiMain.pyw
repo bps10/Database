@@ -88,9 +88,10 @@ class FilterTestWidget(QWidget):
         # create buttons
         listButton = QPushButton(u"Refresh list")
         #queryButton = QPushButton(u"New Query: %s" % title)
-        processButton = QPushButton(u"     run preprocessing     ")
+        processButton = QPushButton(u"       run preprocessing       ")
         
-        self.wavelet = QCheckBox(u"Wavelet")
+        self.wavelet = QCheckBox(u"wavelet filter      ")
+        label1 = QLabel("enter threshold value: ")
         self.waveletThreshold = QLineEdit(u"10")
         #self.waveletThreshold.maximumWidth(10)
         
@@ -120,6 +121,7 @@ class FilterTestWidget(QWidget):
         vlayout.addWidget(text)
         
         hlayout.addWidget(self.wavelet)
+        hlayout.addWidget(label1)
         hlayout.addWidget(self.waveletThreshold)
         #h2layout.addLayout(v2layout)
         hlayout.addWidget(processButton)        
@@ -190,7 +192,7 @@ class FilterTestWidget(QWidget):
             neuron = index.parent().row()
             epoch = index.row()
 
-            r = self.databaseScroll.DataBasesOpen[root - 1]
+            r = self.databaseScroll.DataBasesOpen[root]
             self.data = Dbase(r, PRINT = 1)
             
             n = self.databaseScroll.neuronName[neuron]
@@ -212,7 +214,7 @@ class FilterTestWidget(QWidget):
                 
                 print 'spike data not available.'
                 self.y2Data = self.y1Data
-            #self.y2Data = self.spikesDataquery
+
             self.xData = np.arange(0, len(self.y1Data))
             self.update_curve()
             self.data.Data.CloseDatabase(PRINT=1)
@@ -225,7 +227,7 @@ class FilterTestWidget(QWidget):
             data = index.row()
 
             try:
-                r = self.databaseScroll.DataBasesOpen[root - 1]
+                r = self.databaseScroll.DataBasesOpen[root]
                 self.data = Dbase(r, PRINT = 1)
                 
                 n = self.databaseScroll.neuronName[neuron]
@@ -235,7 +237,7 @@ class FilterTestWidget(QWidget):
                 d = self.databaseScroll.dataName[data] # account for git dataName
                 
                 if d != 'params':
-                    #self.data = Db.Database(DBaseName = root)
+
                     query = self.data.Query( NeuronName = n, Epoch = e, DataName = d)
                 
                     if query.shape[0] > 1:
@@ -270,7 +272,7 @@ class FilterTestWidget(QWidget):
             data = index.parent().row()
             param = index.row()
 
-            r = self.databaseScroll.DataBasesOpen[root - 1]
+            r = self.databaseScroll.DataBasesOpen[root]
             self.data = Dbase(r, PRINT = 1)           
             n = self.databaseScroll.neuronName[neuron]
             
@@ -310,6 +312,7 @@ class databaseListModel(QTreeWidget):
             self.neuronName = []
             self.dataName = []
             self.paramName = []
+            self.update()
             
             self.Db = Dbase(DBname)
             top = self.Db.GetTree()      
@@ -343,13 +346,15 @@ class databaseListModel(QTreeWidget):
                                 
                                 if countEpoch == 1:
                                     self.paramName.append(param)
-            self.Db.Data.CloseDatabase()
+            self.Db.Data.CloseDatabase(PRINT=1)
             
     def refreshTree(self): 
+        self.clear()
         for DB in self.DataBasesOpen:
             self.constructTree(DB)        
-            self.update()
-        print 'sorry this option still glitchy sometimes. close and reopen for best results.'
+        self.update()
+            
+        #print 'sorry this option is still glitchy sometimes. close and reopen for best results.'
         
     def AppendDatabasesOpen(self, DBname):
         self.DataBasesOpenPath.append(DBname)
@@ -358,7 +363,17 @@ class databaseListModel(QTreeWidget):
         
     def GetOpenDatabases(self):
         return self.DataBasesOpen
-             
+
+    def isOpen(self, DBname):
+        truth = False
+        for DB in self.DataBasesOpen:
+            if DB[:-3] == DBname:
+                truth = True
+                break
+            else:
+                pass
+        return truth
+
         
 class Dbase():
     def __init__(self, DBaseName, PRINT = 0):
@@ -512,26 +527,30 @@ class Window(QMainWindow):
         if self.importData.dataset.edit():
             
             self.importData.get()
-            print str(self.importData.dataset.NeuronName)
-            print str(self.importData.dataset.Directory)
             name = str(self.importData.dataset.DatabaseName)
-            addData = Dbase(DBaseName = name + '.h5')
-            addData.AddData(str(self.importData.dataset.NeuronName), 
-                            str(self.importData.dataset.Directory))
-            print 'data import complete. please refresh list.'
+            
+            if self.widget.databaseScroll.isOpen(name):
+                addData = Dbase(DBaseName = name + '.h5')
+                addData.AddData(str(self.importData.dataset.NeuronName), 
+                                str(self.importData.dataset.Directory))
+                
+                self.widget.databaseScroll.refreshTree()
+                print 'data import complete.'
+            else:
+                print 'database not open.'
     
     def create_Database(self):
         if self.newDBase.dataset.edit():
             newDBname = self.newDBase.dataset.name
             newDB = Dbase(newDBname)
             newDB.Data.CloseDatabase()
+            self.widget.databaseScroll.AppendDatabasesOpen(newDBname)
             print '{0} database created.'.format(newDBname)
 
             
     def open_Database(self):
         if self.openDBase.dataset.edit():
             loadedDBname = self.openDBase.dataset.name
-            #loadedDbase = Dbase(loadedDBname)
             self.widget.databaseScroll.AppendDatabasesOpen(loadedDBname)
             self.widget.databaseScroll.refreshTree()
             print '{0} database opened.'.format(loadedDBname)
@@ -540,14 +559,17 @@ class Window(QMainWindow):
         if self.deleteNeuron.dataset.edit():
             
             try: 
-                #self.deleteNeuron.get()
-                rmData = Dbase(self.deleteNeuron.dataset.DBasename)
-                neuron = str(self.deleteNeuron.dataset.name)
-                rmData.Data.RemoveNeuron(neuron, option = 1)
-                rmData.Data.CloseDatabase()
-                print 'successfully deleted', self.deleteNeuron.dataset.name
-                
-            except :
+                name = self.deleteNeuron.dataset.DatabaseName
+                if self.widget.databaseScroll.isOpen(name):
+                    rmData = Dbase(DBaseName = name + '.h5')
+                    neuron = str(self.deleteNeuron.dataset.name)
+                    rmData.Data.RemoveNeuron(neuron, option = 1)
+                    rmData.Data.CloseDatabase()
+                    self.widget.databaseScroll.refreshTree()
+                    print 'successfully deleted', neuron
+                else:
+                    print 'database not open.'
+            except ValueError:
                 
                 print 'sorry, could not delete. please make sure data exists.'
             

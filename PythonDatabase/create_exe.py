@@ -23,7 +23,6 @@ def create_executable():
                description=u"HDF5 database in a gui shell",
                script="guiMain.pyw", target_name="Database.exe")
     spyderlib.add_to_distribution(dist)
-    #dist.add_modules('matplotlib')  # Uncomment if you need matplotlib
     dist.add_modules('guidata')
     dist.add_modules('guiqwt')
     dist.add_modules('scipy.io')
