@@ -22,7 +22,7 @@ import Preprocessing as pp
 import numpy as np
 
 #---Import plot widget base class
-from guiqwt.curve import CurvePlot
+from guiqwt.curve import CurvePlot, ItemListWidget, PlotItemList
 from guiqwt.plot import PlotManager
 from guiqwt.builder import make
 from guidata.configtools import get_icon
@@ -42,7 +42,7 @@ class FilterTestWidget(QWidget):
         
         self.data = Dbase()
         self.y1Data = np.arange(0,100) #self.data.Query()
-        self.y2Data = np.arange(0,100)*2
+        self.y2Data = np.arange(0,100)
         self.xData = np.arange(0,100) #np.arange(0, len(self.yData))
         self.setMinimumSize(700, 600)
         #---guiqwt related attributes:
@@ -55,10 +55,21 @@ class FilterTestWidget(QWidget):
         self.plot = CurvePlot(self)
         self.curve_item = (make.curve([], [], color='b'))
         self.second_curve_item = (make.curve([], [], color='g'))
-        
+
         self.plot.add_item(self.curve_item)
         self.plot.add_item(self.second_curve_item)
         self.plot.set_antialiasing(True)
+        #self.itemlist = ItemListWidget(self.plot)
+        #self.plot.get_items()
+        #self.itemlist = PlotItemList(self.plot)
+        
+        """
+        Add in either pan view or zoom view:
+            CurvePlot.do_pan_view
+            CurvePlot.do_zoom_view
+            perhaps use a slider.
+        
+        """
         #---
         
         self.Neuron     = QLineEdit("Neuron name")
@@ -122,7 +133,7 @@ class FilterTestWidget(QWidget):
             try:
                 yData = self.yData
                 waveletSpikes = pp.wavefilter(yData)
-                self.yData = waveletSpikes
+                self.y1Data = waveletSpikes
                 self.update_curve()
             except:
                 print 'Could not compute wave filter'
@@ -143,7 +154,8 @@ class FilterTestWidget(QWidget):
         
     def update_curve(self):
         #---Update curve
-
+            
+        
         self.curve_item.set_data(self.xData, self.y1Data)
         self.second_curve_item.set_data(self.xData, self.y2Data)
         self.plot.replot()
@@ -165,7 +177,7 @@ class FilterTestWidget(QWidget):
         index = self.databaseScroll.currentIndex() 
 
         if index.column() == 2:
-            print 'here'
+
             neuron = index.parent().row()
             epoch = index.row()
             
@@ -177,9 +189,18 @@ class FilterTestWidget(QWidget):
             
             
             rawDataquery = self.data.Query(NeuronName = n, Epoch = e, DataName = 'rawData')
-            spikesDataquery = self.data.Query(NeuronName = n, Epoch = e, DataName = 'spikes')   
-            self.y1Data = rawDataquery
-            self.y2Data = spikesDataquery * -60
+            try:
+                self.spikesDataquery = self.data.Query(NeuronName = n, Epoch = e, DataName = 'spikes')   
+                self.y1Data = rawDataquery
+                if max(self.y1Data) < 0:
+                    self.y2Data = min(self.y1Data) * self.spikesDataquery
+                else:
+                    self.y2Data = max(self.y1Data) * self.spikesDataquery
+            except :
+                
+                print 'spike data not available.'
+                self.y2Data = self.y1Data
+            #self.y2Data = self.spikesDataquery
             self.xData = np.arange(0, len(self.y1Data))
             self.update_curve()
             
