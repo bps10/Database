@@ -142,8 +142,7 @@ class FilterTestWidget(QWidget):
                 
                 thresh = float(self.waveletThreshold.displayText())
                 self.y2Data = self.y1Data > thresh
-                self.y2Data = self.y2Data * max(self.y1Data)
-                print self.y2Data
+
                 self.update_curve()
                 
             except ValueError:
@@ -406,36 +405,6 @@ class Dbase():
         return tree
         
 
-class FindFiles(DataSet):
-
-    Directory   = DirectoryItem("Directory")
-    NeuronName  = StringItem("NeuronName")
-    DatabaseName = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
-                                           ("AmacrineCells", "AmacrineCells"),
-                                           ("BipolarCells", "BipolarCells"),
-                                           ("Cones", "Cones")])
-
-
-class SingleFileItem(DataSet):
-    
-    name = FileOpenItem("Database")
-    
-
-
-class CreateNewDatabase(DataSet):
-    
-    name = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
-                                   ("AmacrineCells", "AmacrineCells"),
-                                   ("BipolarCells", "BipolarCells"),
-                                   ("Cones", "Cones")])
-    
-class DeleteDataItem(DataSet):
-    
-    DatabaseName = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
-                                           ("AmacrineCells", "AmacrineCells"),
-                                           ("BipolarCells", "BipolarCells"),
-                                           ("Cones", "Cones")])
-    name = StringItem("Neuron Name")        
 
     
     
@@ -528,14 +497,17 @@ class Window(QMainWindow):
             
             self.importData.get()
             name = str(self.importData.dataset.DatabaseName)
-            
+            neuronName = str(self.importData.dataset.NeuronName)
             if self.widget.databaseScroll.isOpen(name):
                 addData = Dbase(DBaseName = name + '.h5')
-                addData.AddData(str(self.importData.dataset.NeuronName), 
-                                str(self.importData.dataset.Directory))
+                if not addData.Data.Exists(neuronName):
+                    addData.AddData(neuronName, str(self.importData.dataset.Directory))
                 
-                self.widget.databaseScroll.refreshTree()
-                print 'data import complete.'
+                    self.widget.databaseScroll.refreshTree()
+                    print 'data import complete.'
+                else :
+                    print ' '
+                    print 'database already has Neuron named {0}'.format(neuronName)
             else:
                 print 'database not open.'
     
@@ -550,6 +522,7 @@ class Window(QMainWindow):
             
     def open_Database(self):
         if self.openDBase.dataset.edit():
+
             loadedDBname = self.openDBase.dataset.name
             self.widget.databaseScroll.AppendDatabasesOpen(loadedDBname)
             self.widget.databaseScroll.refreshTree()
@@ -580,13 +553,9 @@ class Window(QMainWindow):
         self.widget.setup_widget(title)
         self.centralWidget().layout().addWidget(self.widget)
         
-        #---Register plot to manager
-        
+        #---Register plot to manager    
         self.manager.add_plot(self.widget.plot)
-        #self.manager.add_panel(widget.databaseScroll)
-        #self.manager.add_tool()        
-        #---
-                       
+
         
     def setup_window(self):
         #---Add toolbar and register manager tools
@@ -598,6 +567,43 @@ class Window(QMainWindow):
     def closeEvent(self, event):
         self.console.exit_interpreter()
         event.accept()       
+
+
+
+class FindFiles(DataSet):
+
+    Directory   = DirectoryItem("Directory")
+    NeuronName  = StringItem("NeuronName")
+    DatabaseName = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
+                                           ("AmacrineCells", "AmacrineCells"),
+                                           ("BipolarCells", "BipolarCells"),
+                                           ("Cones", "Cones")])
+
+
+class SingleFileItem(DataSet):
+    
+    name = FileOpenItem("Database")
+    
+
+
+class CreateNewDatabase(DataSet):
+    
+    name = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
+                                   ("AmacrineCells", "AmacrineCells"),
+                                   ("BipolarCells", "BipolarCells"),
+                                   ("Cones", "Cones")])
+    
+class DeleteDataItem(DataSet):
+    
+    DatabaseName = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
+                                           ("AmacrineCells", "AmacrineCells"),
+                                           ("BipolarCells", "BipolarCells"),
+                                           ("Cones", "Cones")])
+    name = StringItem("Neuron Name")        
+
+
+
+
 
 def main():
     """Testing this simple Qt/guiqwt example"""
