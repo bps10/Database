@@ -51,3 +51,18 @@ def wavefilter(data, maxlevel = 6):
         return fdata.ravel() # If the signal is 1D, return a 1D array
     else:
         return fdata # Otherwise, give back the 2D array
+        
+def spikeThreshold(bits, option = 0):
+
+    # make sure all runs of ones are well-bounded
+    bounded = np.hstack(([0], bits, [0]))
+    # get 1 at run starts and -1 at run ends
+    difs = np.diff(bounded)
+    run_starts = difs > 0
+    run_ends = difs < 0
+
+     
+    if option == 0:
+        return run_starts + run_ends
+    if option == 1:
+        return run_starts, run_ends
