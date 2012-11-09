@@ -35,7 +35,7 @@ class BusyBar(QThread):
         # Make the Busybar delete itself and the QProgressBar when done        
         self.finished.connect(self.onFinished)
 
-    def run( self ):
+    def run(self):
         while not self.stop:                # keep looping while self is visible
             # Loop sending mail 
             for i in range(100):

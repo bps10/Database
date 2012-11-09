@@ -154,7 +154,8 @@ class FilterTestWidget(QWidget):
                 epochs = self.data.GetTree(n)
                 e = epochs[epoch]
                 
-                self.spikeOverwriteLoc = [r, n + '.' + e + '.spikes', n + '.' + e]
+                self.spikeOverwriteLoc = [r, n + '.' + e + '.spikes', n + '.' + e, 
+                                          n, n + '_' + e + '_spikes']
                 self.data.Data.CloseDatabase(PRINT=1)
                 print 'spike handle: ', self.spikeOverwriteLoc[0:2]
                 self.update_curve()
@@ -163,19 +164,7 @@ class FilterTestWidget(QWidget):
                 print 'ValueError. Could not compute wave filter'
                 pass
 
-        
-    '''   
-    def query_database(self):
-        neuronname = str(self.Neuron.displayText())
-        epochname = str(self.Epoch.displayText())
-        dataname = str(self.QueryName.displayText())
-        try:
-            self.y1Data = self.data.Query(NeuronName = neuronname, Epoch = epochname, DataName = dataname)
-            self.xData = np.arange(0, len(self.y1Data))
-            self.update_curve()
-        except :
-            pass
-    '''  
+
     def add_data_to_DBase(self):
         self.checkAddData.setText("Are you sure you want to add filtered spikes (green trace) to the DB?")
         self.checkAddData.setInformativeText("This will overwrite the existing spike data.")
@@ -188,6 +177,10 @@ class FilterTestWidget(QWidget):
             self.data.Data.RemoveChild(self.spikeOverwriteLoc[1], option=1)
             self.data.Data.AddData2Database('spikes', self.spikes,
                                             self.spikeOverwriteLoc[2])
+            self.data.Data.AddGitVersion(self.spikeOverwriteLoc[3],
+                                         Action = 'updated_{0}'.format(
+                                         self.spikeOverwriteLoc[4]))
+                                         
             self.data.Data.CloseDatabase(PRINT=1)
             
             """ add git version here """
@@ -229,24 +222,24 @@ class FilterTestWidget(QWidget):
             epochs = self.data.GetTree(n)
             e = epochs[epoch]
             
+            if e != 'git':
             
-            
-            rawDataquery = self.data.Query(NeuronName = n, Epoch = e, DataName = 'rawData')
-            try:
-                self.spikesDataquery = self.data.Query(NeuronName = n, Epoch = e, DataName = 'spikes')   
-                self.y1Data = rawDataquery
-                if max(self.y1Data) < 0:
-                    self.y2Data = min(self.y1Data) * self.spikesDataquery
-                else:
-                    self.y2Data = max(self.y1Data) * self.spikesDataquery
-            except (TypeError, ValueError):
-                
-                print 'spike data not available.'
-                self.y2Data = self.y1Data
-
-            self.xData = np.arange(0, len(self.y1Data))
-            self.update_curve()
-            self.data.Data.CloseDatabase(PRINT=1)
+                rawDataquery = self.data.Query(NeuronName = n, Epoch = e, DataName = 'rawData')
+                try:
+                    self.spikesDataquery = self.data.Query(NeuronName = n, Epoch = e, DataName = 'spikes')   
+                    self.y1Data = rawDataquery
+                    if max(self.y1Data) < 0:
+                        self.y2Data = min(self.y1Data) * self.spikesDataquery
+                    else:
+                        self.y2Data = max(self.y1Data) * self.spikesDataquery
+                except (TypeError, ValueError):
+                    
+                    print 'spike data not available.'
+                    self.y2Data = self.y1Data
+    
+                self.xData = np.arange(0, len(self.y1Data))
+                self.update_curve()
+                self.data.Data.CloseDatabase(PRINT=1)
             
         if index.column() == 3:
             
@@ -263,33 +256,36 @@ class FilterTestWidget(QWidget):
 
                 epochs = self.data.GetTree(n)
                 e = epochs[epoch]
-                d = self.databaseScroll.dataName[data] # account for git dataName
                 
-                if d != 'params':
-
-                    query = self.data.Query( NeuronName = n, Epoch = e, DataName = d)
-                
-                    if query.shape[0] > 1:
-                        
-                        self.y1Data = query
-                        
-                        try:
-                            if max(self.y1Data) < 0:
-                                self.y2Data = min(self.y1Data) * self.spikesDataquery
-                            else:
-                                self.y2Data = max(self.y1Data) * self.spikesDataquery
-                        except TypeError:
-                                self.y2Data = self.y1Data
-                         
-                            
-                        self.xData = np.arange(0, len(self.y1Data))
-                        self.update_curve()
+                if e != 'git':
+                    d = self.databaseScroll.dataName[data] # account for git dataName
                     
-                    if query.shape[0] == 1:
-                        print ' '
-                        print d, ': ', query[0]
+                    if d != 'params':
+    
+                        query = self.data.Query( NeuronName = n, Epoch = e, DataName = d)
+                    
+                        if query.shape[0] > 1:
+                            
+                            self.y1Data = query
+                            
+                            try:
+                                if max(self.y1Data) < 0:
+                                    self.y2Data = min(self.y1Data) * self.spikesDataquery
+                                else:
+                                    self.y2Data = max(self.y1Data) * self.spikesDataquery
+                            except TypeError:
+                                    self.y2Data = self.y1Data
+                             
+                                
+                            self.xData = np.arange(0, len(self.y1Data))
+                            self.update_curve()
                         
-                self.data.Data.CloseDatabase(PRINT=1)
+                        if query.shape[0] == 1:
+                            print ' '
+                            print d, ': ', query[0]
+                            
+                    self.data.Data.CloseDatabase(PRINT=1)
+                    
             except ValueError:
                 pass
         
@@ -390,8 +386,7 @@ class databaseListModel(QTreeWidget):
         for DB in self.DataBasesOpen:
             self.constructTree(DB)        
         self.update()
-            
-        #print 'sorry this option is still glitchy sometimes. close and reopen for best results.'
+
         
     def AppendDatabasesOpen(self, DBname):
         self.DataBasesOpenPath.append(DBname)
@@ -436,7 +431,7 @@ class Dbase():
         
     def AddData(self, NeuronName, Directory):
         
-        self.Data.ImportAllData(NeuronName, Directory, progBar = 1)   
+        self.Data.ImportAllData(NeuronName, Directory, progBar = 0)   
 
     def GetTree(self, NeuronName = None):
         
