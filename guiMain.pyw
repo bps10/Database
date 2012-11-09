@@ -543,15 +543,14 @@ class Window(QMainWindow):
                        textMessage = "add data to a database:",
                        style = 4)
                        
-        if DBname.selection != None :
+        if DBname.selection != None and DBname.selection != []:
             
-            self.importData.get()
-            name = str(self.importData.dataset.DatabaseName)
-            neuronName = str(self.importData.dataset.NeuronName)
+            name = DBname.selection[1]
+            neuronName = DBname.selection[2]
             if self.widget.databaseScroll.isOpen(name):
-                addData = Dbase(DBaseName = name + '.h5')
+                addData = Dbase(DBaseName = name)
                 if not addData.Data.Exists(neuronName):
-                    addData.AddData(neuronName, str(self.importData.dataset.Directory))
+                    addData.AddData(neuronName, Directory = DBname.selection[0])
                 
                     self.widget.databaseScroll.refreshTree()
                     print 'data import complete.'
@@ -567,7 +566,7 @@ class Window(QMainWindow):
                        textMessage = "select database to open",
                        style = 3)
                        
-        if DBname.selection != None :
+        if DBname.selection != None and len(DBname.selection) > 1:
             print DBname.selection
             
             loadedDBname = DBname.selection
@@ -715,12 +714,12 @@ class Popup(QDialog):
             vlayout.addWidget(text)
             self.openDB = openDB
             self.NeuronName = QLineEdit()
-            label1 = QLabel('neuron name')  
+            label1 = QLabel('neuron name :')  
             
             self.name = QComboBox()
             self.name.clear()
             self.name.addItems(openDB)
-            label2 = QLabel('database')
+            label2 = QLabel('database :')
             
             '''
             h0layout = QHBoxLayout()
@@ -734,11 +733,26 @@ class Popup(QDialog):
             cancelbutton = QPushButton("Cancel")
             
             self.dirName = QFileDialog()
-            #self.selectedDirName = QFileDialog.getOpenFileName(self)
+            #self.selectedDirName = str(QFileDialog.getOpenFileName(options=QFileDialog.DontUseNativeDialog))
             self.dirName.setFileMode(QFileDialog.Directory)
             self.dirName.setOptions(QFileDialog.ShowDirsOnly)
+            
+            """
+            for child in self.dirName.isWidgetType()():
+                if child.objectName() == "qt_new_folder_action":
+                    print 'here'
+                    pass
+                    #self.dirName.removeAction(child)
+            """
             fileLayout = self.dirName.layout()
             
+            items = (fileLayout.itemAt(i) for i in range(fileLayout.count())) 
+            i = 0
+            for w in items:
+                i +=1
+                if i == 5 or i == 6 or i == 4:
+                    fileLayout.removeItem(w)
+
             fileLayout.addWidget( QLabel(' ') )
             fileLayout.addWidget( QLabel(' ') )
             fileLayout.addWidget( QLabel(' ') )
@@ -778,19 +792,24 @@ class Popup(QDialog):
             self.selection = str(self.dirName)
             
         if self.style == 4:
-            print self.dirName
-            print self.openDB[self.name.currentIndex()]
-            print str(self.NeuronName.displayText())
+            self.selection = []
+            self.selection.append( str(list(self.dirName.selectedFiles())[0]) )
+            self.selection.append( self.openDB[self.name.currentIndex()] )
+            self.selection.append( str(self.NeuronName.displayText()) )
+        
+        if self.style == 4:            
             self.dirName.close()
-        self.close()    
+        else:
+            self.close()    
 
     def closePopup(self):
         self.selection = None
-        self.close()
+        
         if self.style == 4:
             self.dirName.close()
 
-        
+        else:
+            self.close()
         
 def main():
     """Testing this simple Qt/guiqwt example"""
