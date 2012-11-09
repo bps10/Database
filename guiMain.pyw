@@ -9,7 +9,8 @@ from guidata.dataset.qtwidgets import DataSetShowGroupBox
 from guidata.qt.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                               QMainWindow, QLineEdit, QTreeWidget, QTreeWidgetItem, 
                               QCheckBox, QSpacerItem, QLabel, QFont, QDockWidget,
-                              QMessageBox, QGroupBox, QDialog, QComboBox)
+                              QMessageBox, QGroupBox, QDialog, QComboBox,
+                              QFileDialog)
 from guidata.qt.QtCore import (SIGNAL, Qt, QRect)
 from guidata.dataset.dataitems import StringItem, DirectoryItem, FileOpenItem, ChoiceItem
 from guidata.dataset.datatypes import DataSet
@@ -378,7 +379,7 @@ class databaseListModel(QTreeWidget):
     
     def CloseDatabase(self, DBname):
 
-        self.DataBasesOpen.remove(DBname + '.h5')
+        self.DataBasesOpen.remove(DBname )
         #self.DataBasesOpenPath.remove(endswith(DBname + '.h5'))        
         
     def GetOpenDatabases(self):
@@ -387,7 +388,7 @@ class databaseListModel(QTreeWidget):
     def isOpen(self, DBname):
         truth = False
         for DB in self.DataBasesOpen:
-            if DB[:-3] == DBname:
+            if DB == DBname:
                 truth = True
                 break
             else:
@@ -404,10 +405,14 @@ class Dbase():
             self.Data.OpenDatabase(DBaseName, PRINT)
                 
             if self.Data.file == []:
+                
+                if DBaseName[-3:] == '.h5':
+                    DBaseName = DBaseName[:-3]
+                
                 if PRINT == 0:
-                    print 'now creating {0} database.'.format(DBaseName + '.h5')
+                    print 'here creating {0} database.'.format(DBaseName + '.h5')
                     
-                self.Data.CreateDatabase(DBaseName)
+                self.Data.CreateDatabase(DBaseName)    
         
     def Query(self, NeuronName = 'Oct0212Bc8', Epoch = 'epoch040', DataName = 'rawData'):
         return self.Data.QueryDatabase( NeuronName, Epoch, DataName)
@@ -447,18 +452,7 @@ class Window(QMainWindow):
         
 
         # file menu
-        self.openDBase = DataSetShowGroupBox("Open existing h5 database",
-                                             SingleFileItem, 
-                                             comment='Select the h5 database to open')        
-                                             
-        self.newDBase = DataSetShowGroupBox("Create new h5 database",
-                                             SelectDatabase, 
-                                             comment='Select name for new h5 database')
-                                             
-        self.closeDBase = DataSetShowGroupBox("Close an open database",
-                                             SelectDatabase, 
-                                             comment='Select an open h5 database to close')                                                
-        
+
         file_menu = self.menuBar().addMenu("File")
         quit_action = create_action(self, "Quit",
                                     shortcut="Ctrl+Q",
@@ -476,18 +470,13 @@ class Window(QMainWindow):
         closeDB_action = create_action(self,"Close database",
                                        shortcut ="Ctrl+W",
                                        tip = "Close an open database",
-                                       triggered=self.openPopup)
+                                       triggered=self.close_Database)
         
         add_actions(file_menu, (quit_action, openDB_action, createDB_action,
                                 closeDB_action))
         
         # Edit menu
-        self.importData = DataSetShowGroupBox("Neuron Data",
-                                             FindFiles, comment='')
-        
-        self.deleteNeuron = DataSetShowGroupBox("Delete Neuron Data",
-                                                DeleteDataItem, comment='')
-                                                
+
 
         edit_menu = self.menuBar().addMenu("Edit")
         editparam1_action = create_action(self, "Import dataset",
@@ -523,69 +512,7 @@ class Window(QMainWindow):
         # Add the console widget to window as a dockwidget
         self.addDockWidget(Qt.BottomDockWidgetArea, console_dock)
         
-    def add_newData(self):
-        if self.importData.dataset.edit():
             
-            self.importData.get()
-            name = str(self.importData.dataset.DatabaseName)
-            neuronName = str(self.importData.dataset.NeuronName)
-            if self.widget.databaseScroll.isOpen(name):
-                addData = Dbase(DBaseName = name + '.h5')
-                if not addData.Data.Exists(neuronName):
-                    addData.AddData(neuronName, str(self.importData.dataset.Directory))
-                
-                    self.widget.databaseScroll.refreshTree()
-                    print 'data import complete.'
-                else :
-                    print ' '
-                    print 'database already has Neuron named {0}'.format(neuronName)
-            else:
-                print 'database not open.'
-    
-    def close_Database(self):
-        if self.closeDBase.dataset.edit():
-            DBname = self.closeDBase.dataset.name
-            self.widget.databaseScroll.CloseDatabase(DBname)
-            self.widget.databaseScroll.refreshTree()
-            print '{0} closed.'.format(DBname)
-            
-    def create_Database(self):
-        if self.newDBase.dataset.edit():
-            newDBname = self.newDBase.dataset.name
-            #newDB = Dbase(newDBname)
-            #newDB.Data.CloseDatabase()
-            self.widget.databaseScroll.AppendDatabasesOpen(newDBname)
-            print '{0} database created.'.format(newDBname)
-
-            
-    def open_Database(self):
-        if self.openDBase.dataset.edit():
-
-            loadedDBname = self.openDBase.dataset.name
-            self.widget.databaseScroll.AppendDatabasesOpen(loadedDBname)
-            self.widget.databaseScroll.refreshTree()
-            print '{0} database opened.'.format(loadedDBname)
-                    
-    def delete_Neuron(self):
-        if self.deleteNeuron.dataset.edit():
-
-            try: 
-                name = self.deleteNeuron.dataset.DatabaseName
-                if self.widget.databaseScroll.isOpen(name):
-                    rmData = Dbase(DBaseName = name + '.h5')
-                    neuron = str(self.deleteNeuron.dataset.name)
-                    rmData.Data.RemoveNeuron(neuron, option = 1)
-                    rmData.Data.CloseDatabase()
-                    self.widget.databaseScroll.refreshTree()
-                    print 'successfully deleted', neuron
-                else:
-                    print 'database not open.'
-            except ValueError:
-                
-                print 'sorry, could not delete. please make sure data exists.'
-            
-        
-        
     def add_plot(self, title):
         self.widget = FilterTestWidget(self)
         self.widget.setup_widget(title)
@@ -608,95 +535,263 @@ class Window(QMainWindow):
 
     def findOpenDBases(self):
         return self.widget.databaseScroll.DataBasesOpen
-
-    def openPopup(self):
-        t = MyPopup(self.findOpenDBases(), textMessage = "select database to open")
-        print t.selection
         
-    def add_data_to_DBase(self):
-        self.checkAddData.setText("Are you sure you want to add filtered spikes (green trace) to the DB?")
-        self.checkAddData.setInformativeText("This will overwrite the existing spike data.")
-        self.checkAddData.setStandardButtons(QMessageBox.Yes | QMessageBox.No )
-        self.checkAddData.setDefaultButton(QMessageBox.Yes)
-        choice = self.checkAddData.exec_() == QMessageBox.Yes
-        if choice:
-
-            self.data = Dbase(self.spikeOverwriteLoc[0], PRINT = 1)
-            self.data.Data.RemoveChild(self.spikeOverwriteLoc[1], option=1)
-            self.data.Data.AddData2Database('spikes', self.spikes,
-                                            self.spikeOverwriteLoc[2])
-            self.data.Data.AddGitVersion(self.spikeOverwriteLoc[3],
-                                         Action = 'updated_{0}'.format(
-                                         self.spikeOverwriteLoc[4]))
-                                         
-            self.data.Data.CloseDatabase(PRINT=1)
+    ### popup actions: 
+        
+    def add_newData(self):
+        DBname = Popup(self.findOpenDBases(), 
+                       textMessage = "add data to a database:",
+                       style = 4)
+                       
+        if DBname.selection != None :
             
-            """ add git version here """
-            print 'spike data successfully overwritten.'
+            self.importData.get()
+            name = str(self.importData.dataset.DatabaseName)
+            neuronName = str(self.importData.dataset.NeuronName)
+            if self.widget.databaseScroll.isOpen(name):
+                addData = Dbase(DBaseName = name + '.h5')
+                if not addData.Data.Exists(neuronName):
+                    addData.AddData(neuronName, str(self.importData.dataset.Directory))
+                
+                    self.widget.databaseScroll.refreshTree()
+                    print 'data import complete.'
+                else :
+                    print ' '
+                    print 'database already has Neuron named {0}'.format(neuronName)
+            else:
+                print 'database not open.'
+                
+
+    def open_Database(self):
+        DBname = Popup(self.findOpenDBases(), 
+                       textMessage = "select database to open",
+                       style = 3)
+                       
+        if DBname.selection != None :
+            print DBname.selection
+            
+            loadedDBname = DBname.selection
+            self.widget.databaseScroll.AppendDatabasesOpen(loadedDBname)
+            self.widget.databaseScroll.refreshTree()
+            print '{0} database opened.'.format(loadedDBname)
+            
+        else:
+            pass
+         
+                
+    def create_Database(self):
+        DBname = Popup(self.findOpenDBases(), 
+                       textMessage = "enter name of new database",
+                       style = 2)
+                       
+        if DBname.selection != None :
+            newDBname = DBname.selection
+            if newDBname[-3:] != '.h5':
+                newDBname = newDBname + '.h5'
+            self.widget.databaseScroll.AppendDatabasesOpen(newDBname)
+            self.widget.databaseScroll.refreshTree()
+            #print '{0} database created.'.format(newDBname)
+        else:
+            pass
+            
+        
+    def delete_Neuron(self):
+        DBname = Popup(self.findOpenDBases(), 
+                       textMessage = "enter name of neuron to delete",
+                       style = 1)
+                       
+        if DBname.selection != None :
+            try: 
+                name = DBname.selection[0]
+                if self.widget.databaseScroll.isOpen(name):
+                    rmData = Dbase(DBaseName = name)
+                    neuron = DBname.selection[1]
+                    rmData.Data.RemoveNeuron(neuron, option = 1)
+                    rmData.Data.CloseDatabase()
+                    self.widget.databaseScroll.refreshTree()
+                    print 'successfully deleted', neuron
+                else:
+                    print 'database not open.'
+            except (ValueError, TypeError):
+                
+                print 'sorry, could not delete. please make sure data exists.'
+        else:
+             pass
+         
+         
+         
+    def close_Database(self):
+        DBname = Popup(self.findOpenDBases(), 
+                       textMessage = "select database to close",
+                       style = 0)
+        
+        if DBname.selection != None :
+
+            self.widget.databaseScroll.CloseDatabase(DBname.selection)
+            self.widget.databaseScroll.refreshTree()
+            print '{0} closed.'.format(DBname.selection)        
+        else:
+            pass
 
 
 
-class MyPopup(QDialog):
-    def __init__(self, openDB, textMessage = " "):
+class Popup(QDialog):
+    def __init__(self, openDB, textMessage = " ", style = 0):
         QDialog.__init__(self)
-        self.selection = []
-        self.openDB = openDB
-        text = QLabel(textMessage)
-        enterbutton = QPushButton("Enter")
-        self.name = QComboBox()
-        self.name.clear()
-        self.name.addItems(openDB)
+        self.style = style
         
-        self.connect(enterbutton, SIGNAL('clicked()'), self.returnSelection)
+        self.selection = None
+        Num = 1
+        if self.style < 3:
+            text = QLabel(textMessage)
+            enterbutton = QPushButton("Enter")
+            cancelbutton = QPushButton("Cancel")
+    
+            vlayout = QVBoxLayout()
+            vlayout.addWidget(text)
+            
+            if self.style < 2:
+                self.openDB = openDB
         
-        vlayout = QVBoxLayout()
-        vlayout.addWidget(text)
-        vlayout.addWidget(self.name)
-        vlayout.addWidget(enterbutton)
-        self.setLayout(vlayout)
-        self.setGeometry(QRect(100, 100, 100, 100))
-        self.raise_()
-        self.exec_()
-        
+                self.name = QComboBox()
+                self.name.clear()
+                self.name.addItems(openDB)
+                label = QLabel('database')
+                
+                h0layout = QHBoxLayout()
+                h0layout.addWidget(label)
+                h0layout.addWidget(self.name)
+                vlayout.addLayout(h0layout)                
+                
+                vlayout.addWidget(self.name)
+
+            if self.style == 1:
+                self.NeuronName = QLineEdit()
+                label = QLabel('neuron name')
+                
+                h1layout = QHBoxLayout()
+                h1layout.addWidget(label)
+                h1layout.addWidget(self.NeuronName)
+                vlayout.addLayout(h1layout)
+                
+            if self.style == 2:
+                
+                self.name = QLineEdit()
+                label = QLabel('database name')
+                
+                h1layout = QHBoxLayout()
+                h1layout.addWidget(label)
+                h1layout.addWidget(self.name)
+                vlayout.addLayout(h1layout)
+                
+
+            self.connect(enterbutton, SIGNAL('clicked()'), self.returnSelection)
+            self.connect(cancelbutton, SIGNAL('clicked()'), self.closePopup)
+                
+            hlayout = QHBoxLayout()
+            hlayout.addWidget(enterbutton)
+            hlayout.addWidget(cancelbutton)
+            vlayout.addLayout(hlayout)            
+    
+            self.setLayout(vlayout)
+            self.setGeometry(QRect(100, 100, 200, 100 * Num))
+            self.raise_()
+            self.exec_()
+
+        if self.style == 3:
+            
+            self.dirName = QFileDialog.getOpenFileName(self, 'Open H5 file',
+                                                         '.',
+                                                         "H5 file ( *.h5 )")
+            self.returnSelection()
+            
+            
+        if self.style == 4:
+            text = QLabel(textMessage)
+            enterbutton = QPushButton("Enter")
+            cancelbutton = QPushButton("Cancel")
+    
+            vlayout = QVBoxLayout()
+            vlayout.addWidget(text)
+            self.openDB = openDB
+            self.NeuronName = QLineEdit()
+            label1 = QLabel('neuron name')  
+            
+            self.name = QComboBox()
+            self.name.clear()
+            self.name.addItems(openDB)
+            label2 = QLabel('database')
+            
+            '''
+            h0layout = QHBoxLayout()
+            h0layout.addWidget(label)
+            h0layout.addWidget(self.name)
+            vlayout.addLayout(h0layout)                
+            
+            vlayout.addWidget(self.name)            
+            '''
+            enterbutton = QPushButton("Enter")
+            cancelbutton = QPushButton("Cancel")
+            
+            self.dirName = QFileDialog()
+            #self.selectedDirName = QFileDialog.getOpenFileName(self)
+            self.dirName.setFileMode(QFileDialog.Directory)
+            self.dirName.setOptions(QFileDialog.ShowDirsOnly)
+            fileLayout = self.dirName.layout()
+            
+            fileLayout.addWidget( QLabel(' ') )
+            fileLayout.addWidget( QLabel(' ') )
+            fileLayout.addWidget( QLabel(' ') )
+
+            fileLayout.addWidget( QLabel(' ') )
+            fileLayout.addWidget( QLabel(' please enter data below:  ') )
+            fileLayout.addWidget( QLabel(' ') )
+
+            fileLayout.addWidget(label1)
+            fileLayout.addWidget(self.NeuronName)
+            fileLayout.addWidget( enterbutton ) 
+
+            fileLayout.addWidget(label2)
+            fileLayout.addWidget(self.name)
+            fileLayout.addWidget( cancelbutton )
+                       
+            self.connect(enterbutton, SIGNAL('clicked()'), self.returnSelection)
+            self.connect(cancelbutton, SIGNAL('clicked()'), self.closePopup)
+            
+            
+            self.dirName.raise_()
+            self.dirName.exec_()           
+
+
+            
     def returnSelection(self):
-        self.selection = self.openDB[self.name.currentIndex()]
+        if self.style == 0:
+            self.selection = self.openDB[self.name.currentIndex()]
+
+        if self.style == 1:
+            self.selection = (self.openDB[self.name.currentIndex()], 
+                                          str(self.NeuronName.displayText()))
+        if self.style == 2:
+            self.selection = str(self.name.displayText())
+            
+        if self.style == 3:
+            self.selection = str(self.dirName)
+            
+        if self.style == 4:
+            print self.dirName
+            print self.openDB[self.name.currentIndex()]
+            print str(self.NeuronName.displayText())
+            self.dirName.close()
         self.close()    
 
-
-class FindFiles(DataSet):
-    
-    Directory   = DirectoryItem("Directory")
-    NeuronName  = StringItem("NeuronName")
-    DatabaseName = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
-                                           ("AmacrineCells", "AmacrineCells"),
-                                           ("BipolarCells", "BipolarCells"),
-                                           ("Cones", "Cones")])
-
-class SingleFileItem(DataSet):
-    
-    name = FileOpenItem("Database")
-    
-
-
-class SelectDatabase(DataSet):
-
-    name = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
-                                   ("AmacrineCells", "AmacrineCells"),
-                                   ("BipolarCells", "BipolarCells"),
-                                   ("Cones", "Cones")])
-    
-class DeleteDataItem(DataSet):
-    #print Window.findOpenDBases()
-    
-    DatabaseName = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
-                                           ("AmacrineCells", "AmacrineCells"),
-                                           ("BipolarCells", "BipolarCells"),
-                                           ("Cones", "Cones")])
-    name = StringItem("Neuron Name")        
+    def closePopup(self):
+        self.selection = None
+        self.close()
+        if self.style == 4:
+            self.dirName.close()
 
         
         
-
 def main():
     """Testing this simple Qt/guiqwt example"""
     
