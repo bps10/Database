@@ -9,8 +9,8 @@ from guidata.dataset.qtwidgets import DataSetShowGroupBox
 from guidata.qt.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                               QMainWindow, QLineEdit, QTreeWidget, QTreeWidgetItem, 
                               QCheckBox, QSpacerItem, QLabel, QFont, QDockWidget,
-                              QMessageBox)
-from guidata.qt.QtCore import (SIGNAL, Qt)
+                              QMessageBox, QGroupBox, QDialog, QComboBox)
+from guidata.qt.QtCore import (SIGNAL, Qt, QRect)
 from guidata.dataset.dataitems import StringItem, DirectoryItem, FileOpenItem, ChoiceItem
 from guidata.dataset.datatypes import DataSet
 from guidata.qthelpers import create_action, add_actions, get_std_icon
@@ -61,29 +61,17 @@ class FilterTestWidget(QWidget):
         self.plot.add_item(self.curve_item)
         self.plot.add_item(self.second_curve_item)
         self.plot.set_antialiasing(True)
-        #self.itemlist = ItemListWidget(self.plot)
-        #self.plot.get_items()
-        #self.itemlist = PlotItemList(self.plot)
 
-        #---
-        
-        #self.Neuron     = QLineEdit("Neuron name")
-        #self.Epoch      = QLineEdit("Epoch name")
-        #self.QueryName  = QLineEdit("Data selection")
-        
-
-        # create tree
         self.databaseScroll = databaseListModel(DBaseName = None)
-        
 
-        text = QLabel("Preprocess data")
         spacer = QSpacerItem(30,40)
         
+        preprocessData = QGroupBox(u"preprocess data")
         # create buttons
         listButton = QPushButton(u"Refresh list")
-        #queryButton = QPushButton(u"New Query: %s" % title)
         processButton = QPushButton(u"       run preprocessing       ")
         addwaveletButton = QPushButton(u"  add wavelet spikes to DB  ")
+        
         self.checkAddData = QMessageBox()
         
         self.wavelet = QCheckBox(u"wavelet filter      ")
@@ -102,29 +90,24 @@ class FilterTestWidget(QWidget):
         
         vlayout = QVBoxLayout()
         hlayout = QHBoxLayout()
-        #h2layout = QHBoxLayout()
-        #v2layout = QVBoxLayout()
+
         
         vlayout.addWidget(self.databaseScroll)
         vlayout.addWidget(listButton)
-        #hlayout.addWidget(self.Neuron)
-        #hlayout.addWidget(self.Epoch)
-        #hlayout.addWidget(self.QueryName)
-        #vlayout.addLayout(hlayout)
-        
-        #vlayout.addWidget(queryButton)
+
         vlayout.addWidget(self.plot)
         vlayout.addSpacerItem(spacer)
-        vlayout.addWidget(text)
+        
         
         hlayout.addWidget(self.wavelet)
         hlayout.addWidget(label1)
         hlayout.addWidget(self.waveletThreshold)
-        #h2layout.addLayout(v2layout)
+
         hlayout.addWidget(processButton)        
         hlayout.addWidget(addwaveletButton)
+        preprocessData.setLayout(hlayout)
+        vlayout.addWidget(preprocessData)
         
-        vlayout.addLayout(hlayout)
         self.setLayout(vlayout)
         
         self.update_curve()
@@ -493,7 +476,7 @@ class Window(QMainWindow):
         closeDB_action = create_action(self,"Close database",
                                        shortcut ="Ctrl+W",
                                        tip = "Close an open database",
-                                       triggered=self.close_Database)
+                                       triggered=self.openPopup)
         
         add_actions(file_menu, (quit_action, openDB_action, createDB_action,
                                 closeDB_action))
@@ -626,6 +609,60 @@ class Window(QMainWindow):
     def findOpenDBases(self):
         return self.widget.databaseScroll.DataBasesOpen
 
+    def openPopup(self):
+        t = MyPopup(self.findOpenDBases(), textMessage = "select database to open")
+        print t.selection
+        
+    def add_data_to_DBase(self):
+        self.checkAddData.setText("Are you sure you want to add filtered spikes (green trace) to the DB?")
+        self.checkAddData.setInformativeText("This will overwrite the existing spike data.")
+        self.checkAddData.setStandardButtons(QMessageBox.Yes | QMessageBox.No )
+        self.checkAddData.setDefaultButton(QMessageBox.Yes)
+        choice = self.checkAddData.exec_() == QMessageBox.Yes
+        if choice:
+
+            self.data = Dbase(self.spikeOverwriteLoc[0], PRINT = 1)
+            self.data.Data.RemoveChild(self.spikeOverwriteLoc[1], option=1)
+            self.data.Data.AddData2Database('spikes', self.spikes,
+                                            self.spikeOverwriteLoc[2])
+            self.data.Data.AddGitVersion(self.spikeOverwriteLoc[3],
+                                         Action = 'updated_{0}'.format(
+                                         self.spikeOverwriteLoc[4]))
+                                         
+            self.data.Data.CloseDatabase(PRINT=1)
+            
+            """ add git version here """
+            print 'spike data successfully overwritten.'
+
+
+
+class MyPopup(QDialog):
+    def __init__(self, openDB, textMessage = " "):
+        QDialog.__init__(self)
+        self.selection = []
+        self.openDB = openDB
+        text = QLabel(textMessage)
+        enterbutton = QPushButton("Enter")
+        self.name = QComboBox()
+        self.name.clear()
+        self.name.addItems(openDB)
+        
+        self.connect(enterbutton, SIGNAL('clicked()'), self.returnSelection)
+        
+        vlayout = QVBoxLayout()
+        vlayout.addWidget(text)
+        vlayout.addWidget(self.name)
+        vlayout.addWidget(enterbutton)
+        self.setLayout(vlayout)
+        self.setGeometry(QRect(100, 100, 100, 100))
+        self.raise_()
+        self.exec_()
+        
+    def returnSelection(self):
+        self.selection = self.openDB[self.name.currentIndex()]
+        self.close()    
+
+
 class FindFiles(DataSet):
     
     Directory   = DirectoryItem("Directory")
@@ -635,7 +672,6 @@ class FindFiles(DataSet):
                                            ("BipolarCells", "BipolarCells"),
                                            ("Cones", "Cones")])
 
-
 class SingleFileItem(DataSet):
     
     name = FileOpenItem("Database")
@@ -643,7 +679,7 @@ class SingleFileItem(DataSet):
 
 
 class SelectDatabase(DataSet):
-    
+
     name = ChoiceItem("Database", [("GanglionCells", "GanglionCells"), 
                                    ("AmacrineCells", "AmacrineCells"),
                                    ("BipolarCells", "BipolarCells"),
@@ -668,6 +704,8 @@ def main():
     
     app = QApplication([])
     win = Window()
+    
+
     #win.add_plot("1")
     #win.add_plot("2")
     #---Setup window
