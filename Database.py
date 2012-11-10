@@ -37,9 +37,10 @@ class Database():
             loc = 'self.file.root.' + GroupName
             for name in Parents:
                 loc += '.' + Parents
-        
+                
+        filters = tables.Filters(complevel=1, complib='zlib', fletcher32=True)
         atom = tables.Atom.from_dtype(Data.dtype)
-        ds = self.file.createCArray(eval(loc), DataName, atom, Data.shape)
+        ds = self.file.createCArray(eval(loc), DataName, atom, Data.shape, filters = filters)
         ds[:] = Data
 
 
