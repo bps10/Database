@@ -4,23 +4,23 @@ Created on Fri Oct 26 13:30:48 2012
 
 @author: Brian
 """
-# guidata imports
-from guidata.dataset.qtwidgets import DataSetShowGroupBox
-from guidata.qt.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
+# PyQt4 imports
+from PyQt4.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                               QMainWindow, QLineEdit, QTreeWidget, QTreeWidgetItem, 
                               QCheckBox, QSpacerItem, QLabel, QFont, QDockWidget,
                               QMessageBox, QGroupBox, QDialog, QComboBox,
                               QFileDialog)
-from guidata.qt.QtCore import (SIGNAL, Qt, QRect)
-from guidata.dataset.dataitems import StringItem, DirectoryItem, FileOpenItem, ChoiceItem
-from guidata.dataset.datatypes import DataSet
+from PyQt4.QtCore import (SIGNAL, Qt, QRect)
+
+# guidata imports
 from guidata.qthelpers import create_action, add_actions, get_std_icon
 
 # user defined imports
 import Database as Db
 import Preprocessing as pp
 from ProgressBar import BusyBar
-# general
+
+# general imports
 import numpy as np
 import os
 
@@ -201,7 +201,8 @@ class FilterTestWidget(QWidget):
             r = self.databaseScroll.DataBasesOpen[root]
             self.data = Dbase(r, PRINT = 1)
             
-            n = self.databaseScroll.neuronName[neuron]
+            neurons = self.data.GetTree()         
+            n = neurons[neuron]
                 
             epochs = self.data.GetTree(n)
             e = epochs[epoch]
@@ -236,8 +237,9 @@ class FilterTestWidget(QWidget):
                 r = self.databaseScroll.DataBasesOpen[root]
                 self.data = Dbase(r, PRINT = 1)
                 
-                n = self.databaseScroll.neuronName[neuron]
-
+                neurons = self.data.GetTree()
+                n = neurons[neuron]
+                
                 epochs = self.data.GetTree(n)
                 e = epochs[epoch]
                 
@@ -283,7 +285,8 @@ class FilterTestWidget(QWidget):
 
             r = self.databaseScroll.DataBasesOpen[root]
             self.data = Dbase(r, PRINT = 1)           
-            n = self.databaseScroll.neuronName[neuron]
+            neurons = self.data.GetTree()
+            n = neurons[neuron]
             
             epochs = self.data.GetTree(n)
             e = epochs[epoch]
@@ -317,7 +320,9 @@ class databaseListModel(QTreeWidget):
             root = QTreeWidgetItem(self)
             root.setText(0, DBname[:-3])
             
-            self.busyBar = BusyBar( text = "Updating tree" )
+            self.busyBar = BusyBar( text = "Updating tree" ) 
+            self.busyBar.changeValue.connect(self.busyBar.proBar.setValue, 
+                                             Qt.QueuedConnection)
             self.busyBar.start()
             
             self.neuronName = []
@@ -327,8 +332,8 @@ class databaseListModel(QTreeWidget):
             
             self.Db = Dbase(DBname)
             top = self.Db.GetTree()      
-            for countNeuro,neuron in enumerate(top):
-                
+            for countNeuron,neuron in enumerate(top):
+
                 neurons = QTreeWidgetItem(root) 
                 neurons.setText(1, neuron)
                 
@@ -375,7 +380,6 @@ class databaseListModel(QTreeWidget):
     def AppendDatabasesOpen(self, DBname):
         self.DataBasesOpenPath.append(DBname)
         self.DataBasesOpen.append(os.path.basename(DBname))
-        print 'databases open: ', self.DataBasesOpen   
     
     def CloseDatabase(self, DBname):
 
@@ -410,7 +414,7 @@ class Dbase():
                     DBaseName = DBaseName[:-3]
                 
                 if PRINT == 0:
-                    print 'here creating {0} database.'.format(DBaseName + '.h5')
+                    print '{0} database created.'.format(DBaseName + '.h5')
                     
                 self.Data.CreateDatabase(DBaseName)    
         
