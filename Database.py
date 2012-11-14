@@ -5,6 +5,7 @@ import glob as glob
 import git as git
 import tables as tables
 import os
+import datetime as dt
 from ProgressBar import BusyBar
 from guidata.qt.QtCore import Qt
 
@@ -307,7 +308,9 @@ class Database():
         for line in GitDat:
 
             dat = np.append(dat, str(line) )
-
+            
+        dat = np.append(dat, dt.datetime.utcnow().ctime() )
+        
         self.AddData2Database(Action, dat, NeuronName + '.git')
         
                 
