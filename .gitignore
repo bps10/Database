@@ -3,10 +3,10 @@ bin
 obj
 
 # Python
-.pyc
+*.pyc
 
 # executables
-.exe
+*.exe
 
 # mstest test results
 TestResults
