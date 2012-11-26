@@ -5,7 +5,9 @@ import glob as glob
 import git as git
 import tables as tables
 import os
+import datetime as dt
 from ProgressBar import BusyBar
+from guidata.qt.QtCore import Qt
 
 class Database():
 
@@ -142,12 +144,13 @@ class Database():
             GitDirectory = os.getcwd()
             
         print 'Importing data, please wait ... '    
-        #self.OpenDatabase(Name + '.h5')
+
         self.getAllFiles(Directory)
         self.CreateGroup(NeuronName)
         
         if progBar == 1:
             self.busyBar = BusyBar( text = "Importing data" )
+            self.busyBar.changeValue.connect(self.busyBar.proBar.setValue, Qt.QueuedConnection)
             self.busyBar.start()
         
         for i in range(0, self.DirFiles.shape[0] ):
@@ -305,7 +308,9 @@ class Database():
         for line in GitDat:
 
             dat = np.append(dat, str(line) )
-
+            
+        dat = np.append(dat, dt.datetime.utcnow().ctime() )
+        
         self.AddData2Database(Action, dat, NeuronName + '.git')
         
                 

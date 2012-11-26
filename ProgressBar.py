@@ -18,7 +18,7 @@ class BusyBar(QThread):
     """
     changeValue = pyqtSignal(int)
     def __init__(self, text = "" ):
-        QThread.__init__(self)
+        QThread.__init__(self, parent = None)
         self.text = text
         self.stop = False
         self.proBar = QProgressBar()
@@ -27,22 +27,23 @@ class BusyBar(QThread):
         self.proBar.setTextVisible( True )
         self.proBar.setFormat( self.text )
         self.proBar.setValue( 0 )
-        self.proBar.setFixedSize( 500 , 50 )
+        self.proBar.setFixedSize( 300 , 40 )
         self.proBar.setAlignment(Qt.AlignCenter)
         self.proBar.show()
 
-        self.changeValue.connect(self.proBar.setValue, Qt.QueuedConnection)
+        #self.changeValue.connect(self.proBar.setValue, Qt.QueuedConnection)
         # Make the Busybar delete itself and the QProgressBar when done        
         self.finished.connect(self.onFinished)
 
     def run(self):
-        while not self.stop:                # keep looping while self is visible
+        while not self.stop:                
+            # keep looping while self is visible
             # Loop sending mail 
             for i in range(100):
                 # emit the signal instead of calling setValue
                 # also we can't read the progress bar value from the thread
                 self.changeValue.emit( i )
-                time.sleep(0.05)
+                time.sleep(0.01)
             self.changeValue.emit( 0 )
 
     def onFinished(self):
