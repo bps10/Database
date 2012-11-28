@@ -9,8 +9,8 @@ from PyQt4.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                               QMainWindow, QLineEdit, QTreeWidget, QTreeWidgetItem, 
                               QCheckBox, QSpacerItem, QLabel, QFont, QDockWidget,
                               QMessageBox, QGroupBox, QDialog, QComboBox,
-                              QFileDialog)
-from PyQt4.QtCore import (SIGNAL, Qt, QRect)
+                              QFileDialog, QTabWidget, QTabBar)
+from PyQt4.QtCore import (SIGNAL, Qt, QRect, pyqtSignal, QObject)
 
 # guidata imports
 from guidata.qthelpers import create_action, add_actions, get_std_icon
@@ -23,6 +23,7 @@ from ProgressBar import BusyBar
 # general imports
 import numpy as np
 import os
+import datetime as dt
 
 #---Import plot widget base class
 from guiqwt.curve import CurvePlot
@@ -68,6 +69,7 @@ class FilterTestWidget(QWidget):
         spacer = QSpacerItem(30,40)
         
         preprocessData = QGroupBox(u"preprocess data")
+        
         # create buttons
         listButton = QPushButton(u"Refresh list")
         processButton = QPushButton(u"       run preprocessing       ")
@@ -83,9 +85,8 @@ class FilterTestWidget(QWidget):
 
         # connect user actions with methods:
         self.connect(listButton, SIGNAL('clicked()'), self.but_clicked)
-        #self.connect(queryButton, SIGNAL('clicked()'), self.query_database)
         self.connect(processButton, SIGNAL('clicked()'), self.run_preprocess)
-        self.connect(self.databaseScroll, SIGNAL("doubleClicked(QModelIndex)"), 
+        self.connect(self.databaseScroll.TreeWid, SIGNAL("doubleClicked(QModelIndex)"), 
                      self.double_clicked)
         self.connect(addwaveletButton, SIGNAL('clicked()'), self.add_data_to_DBase)
         
@@ -93,7 +94,7 @@ class FilterTestWidget(QWidget):
         hlayout = QHBoxLayout()
 
         
-        vlayout.addWidget(self.databaseScroll)
+        vlayout.addWidget(self.databaseScroll.TabWid)
         vlayout.addWidget(listButton)
 
         vlayout.addWidget(self.plot)
@@ -156,14 +157,18 @@ class FilterTestWidget(QWidget):
         self.checkAddData.setDefaultButton(QMessageBox.Yes)
         choice = self.checkAddData.exec_() == QMessageBox.Yes
         if choice:
-
+            tim = dt.datetime.utcnow().ctime()
+            
             self.data = Dbase(self.spikeOverwriteLoc[0], PRINT = 1)
             self.data.Data.RemoveChild(self.spikeOverwriteLoc[1], option=1)
             self.data.Data.AddData2Database('spikes', self.spikes,
                                             self.spikeOverwriteLoc[2])
             self.data.Data.AddGitVersion(self.spikeOverwriteLoc[3],
                                          Action = 'updated_{0}'.format(
-                                         self.spikeOverwriteLoc[4]))
+                                         self.spikeOverwriteLoc[4] + 
+                                         str(tim.day) + '_' +
+                                         str(tim.month) + '_' +
+                                         str(tim.year) ))
                                          
             self.data.Data.CloseDatabase(PRINT=1)
             
@@ -190,14 +195,14 @@ class FilterTestWidget(QWidget):
         when a name button is clicked, iterate over the model, 
         find the neuron with this name, and set the treeviews current item
         '''
-        
-        index = self.databaseScroll.currentIndex()
-
+        print 'here'
+        index = self.databaseScroll.TabWid.GetCurrentTab()
+        print index
         if index.column() == 2:
             root = index.parent().parent().row()
             neuron = index.parent().row()
             epoch = index.row()
-
+            print root, neuron, epoch
             r = self.databaseScroll.DataBasesOpen[root]
             self.data = Dbase(r, PRINT = 1)
             
@@ -299,14 +304,14 @@ class FilterTestWidget(QWidget):
             print p, ': ', query
             self.data.Data.CloseDatabase(PRINT=1)
             
-            
-class databaseListModel(QTreeWidget):
+
+class treeList(QTreeWidget):
     def __init__(self, DBaseName = None):
         QTreeWidget.__init__(self)
         self.DataBasesOpen = []
         self.DataBasesOpenPath = []
         
-        header = QTreeWidgetItem(["Database","Neuron","Epoch","Data", 
+        header = QTreeWidgetItem(["Neuron","Epoch","Data", 
                                   "Parameters"])
         self.setHeaderItem(header)   
 
@@ -314,11 +319,9 @@ class databaseListModel(QTreeWidget):
     
     def constructTree(self, DBname):   
         if DBname == None:
-            root = QTreeWidgetItem(self)
+            pass
         
         else:
-            root = QTreeWidgetItem(self)
-            root.setText(0, DBname[:-3])
             
             self.busyBar = BusyBar( text = "Updating tree" ) 
             self.busyBar.changeValue.connect(self.busyBar.proBar.setValue, 
@@ -334,8 +337,8 @@ class databaseListModel(QTreeWidget):
             top = self.Db.GetTree()      
             for countNeuron,neuron in enumerate(top):
 
-                neurons = QTreeWidgetItem(root) 
-                neurons.setText(1, neuron)
+                neurons = QTreeWidgetItem(self) 
+                neurons.setText(0, neuron)
                 
                 self.neuronName.append(neuron)
     
@@ -343,13 +346,13 @@ class databaseListModel(QTreeWidget):
                 for countEpoch, epoch in enumerate(neuronTree):
                     
                     singleEpoch = QTreeWidgetItem(neurons) 
-                    singleEpoch.setText(2, epoch)
+                    singleEpoch.setText(1, epoch)
                     
                     
                     epochTree = self.Db.GetTree( neuron + '.' + epoch)
                     for countData,data in enumerate(epochTree):
                         singleData = QTreeWidgetItem(singleEpoch) 
-                        singleData.setText(3, data)
+                        singleData.setText(2, data)
                         
                         if countEpoch == 1:
                             self.dataName.append(data)
@@ -358,7 +361,7 @@ class databaseListModel(QTreeWidget):
                             paramTree = self.Db.GetTree( neuron + '.' + epoch + '.' + data)
                             for countParam,param in enumerate(paramTree):
                                 singleParam = QTreeWidgetItem(singleData)
-                                singleParam.setText(4, param)
+                                singleParam.setText(3, param)
                                 
                                 if countEpoch == 1:
                                     self.paramName.append(param)
@@ -383,7 +386,7 @@ class databaseListModel(QTreeWidget):
     
     def CloseDatabase(self, DBname):
 
-        self.DataBasesOpen.remove(DBname )
+        self.DataBasesOpen.remove(DBname)
         #self.DataBasesOpenPath.remove(endswith(DBname + '.h5'))        
         
     def GetOpenDatabases(self):
@@ -398,6 +401,83 @@ class databaseListModel(QTreeWidget):
             else:
                 pass
         return truth
+
+            
+class databaseListModel(QWidget):
+    def __init__(self, DBaseName = None):
+        QWidget.__init__(self)
+        self.TabWid = QTabWidget(self)
+        self.here = treeList(DBaseName)
+        self.TabWid.addTab(self.here, 'Empty')
+        
+        self.TreeWid = self.TabWid.children()[0].currentWidget()
+        print self.TreeWid
+        #for name in dir(self.TreeWid):
+            #print name
+        
+        self.DataBasesOpen = []
+        self.DataBasesOpenPath = []
+        self.TabWid.setTabsClosable(True)
+        self.TabWid.currTab = self.GetCurrentTab()
+
+        self.connect(self.TreeWid, SIGNAL("doubleClicked(QModelIndex)"),
+                     self.dud)
+        self.connect(self.TabWid, SIGNAL("currentChanged(int)"),
+                     self.switchTab)
+        self.connect(self.TabWid, SIGNAL("tabCloseRequested(int)"),
+                     self.closeTab)
+
+    def dud(self):
+        print 'here idiot'
+        
+    def switchTab(self, index):
+        print 'switching tabs!'
+        print index
+        print self.DataBasesOpen[index]
+        self.TreeWid = self.TabWid.children()[0].currentWidget()
+        #self.here = treeList(self.DataBasesOpen[index])
+        
+    def closeTab(self, index):
+        print index
+        print self.DataBasesOpen[index]
+        self.TabWid.removeTab(index)
+        self.TreeWid = self.TabWid.children()[0].currentWidget()
+        self.CloseDatabase(self.DataBasesOpen[index])
+        self.here = treeList(self.DataBasesOpen[index])
+        
+    def onTabClick(self, index):
+        print 'woohoo!'
+        
+    def GetCurrentTab(self):
+        return self.TabWid.currentIndex()
+        
+    def OpenDatabases(self, DBaseName):
+
+        
+        if self.TabWid.children()[1].tabText(0) == 'Empty':
+            self.TabWid.removeTab(0)
+        self.here = treeList(DBaseName)
+        self.TabWid.addTab(self.here, os.path.basename(DBaseName)[:-3])
+        self.TreeWid = self.TabWid.children()[0].currentWidget()
+        
+        print self.TreeWid.neuronName[0]  
+        
+    def AppendDatabasesOpen(self, DBaseName):
+        self.DataBasesOpenPath.append(DBaseName)
+        self.DataBasesOpen.append(os.path.basename(DBaseName))        
+
+    def refreshTree(self): 
+        
+        self.TreeWid = self.TabWid.children()[0].currentWidget()
+        self.TreeWid.refreshTree()
+        self.TabWid.update()
+
+    def CloseDatabase(self, DBname):
+        self.here.clear()
+        self.DataBasesOpen.remove(DBname)
+        #self.DataBasesOpenPath.remove(endswith(DBname + '.h5'))   
+        self.TabWid.update()
+
 
         
 class Dbase():
@@ -480,7 +560,6 @@ class Window(QMainWindow):
                                 closeDB_action))
         
         # Edit menu
-
 
         edit_menu = self.menuBar().addMenu("Edit")
         editparam1_action = create_action(self, "Import dataset",
@@ -575,8 +654,9 @@ class Window(QMainWindow):
             
             loadedDBname = DBname.selection
             self.widget.databaseScroll.AppendDatabasesOpen(loadedDBname)
-            self.widget.databaseScroll.refreshTree()
-            print '{0} database opened.'.format(loadedDBname)
+            self.widget.databaseScroll.OpenDatabases(loadedDBname)
+            #self.widget.databaseScroll.refreshTree()
+            #print '{0} database opened.'.format(loadedDBname)
             
         else:
             pass
@@ -725,14 +805,7 @@ class Popup(QDialog):
             self.name.addItems(openDB)
             label2 = QLabel('database :')
             
-            '''
-            h0layout = QHBoxLayout()
-            h0layout.addWidget(label)
-            h0layout.addWidget(self.name)
-            vlayout.addLayout(h0layout)                
-            
-            vlayout.addWidget(self.name)            
-            '''
+
             enterbutton = QPushButton("Enter")
             cancelbutton = QPushButton("Cancel")
             
@@ -741,13 +814,7 @@ class Popup(QDialog):
             self.dirName.setFileMode(QFileDialog.Directory)
             self.dirName.setOptions(QFileDialog.ShowDirsOnly)
             
-            """
-            for child in self.dirName.isWidgetType()():
-                if child.objectName() == "qt_new_folder_action":
-                    print 'here'
-                    pass
-                    #self.dirName.removeAction(child)
-            """
+
             fileLayout = self.dirName.layout()
             
             items = (fileLayout.itemAt(i) for i in range(fileLayout.count())) 

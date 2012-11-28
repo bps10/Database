@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Nov 08 14:30:49 2012
-
-@author: Brian
-"""
 from PyQt4.QtCore import pyqtSignal, QThread, Qt
 from PyQt4.QtGui import QProgressBar
 import time
@@ -15,6 +9,11 @@ class BusyBar(QThread):
            
     Looping progress bar
     create the signal that the thread will emit
+    
+    .. note::
+       This function creates a busy bar but I have not figured out how to \
+       attach it to a process. Therefore, it is currently functionally \
+       useless.
     """
     changeValue = pyqtSignal(int)
     def __init__(self, text = "" ):
@@ -36,6 +35,8 @@ class BusyBar(QThread):
         self.finished.connect(self.onFinished)
 
     def run(self):
+        """
+        """
         while not self.stop:                
             # keep looping while self is visible
             # Loop sending mail 
@@ -47,8 +48,12 @@ class BusyBar(QThread):
             self.changeValue.emit( 0 )
 
     def onFinished(self):
+        """
+        """
         self.proBar.deleteLater()
         self.deleteLater()
 
     def Kill(self):
+        """
+        """
         self.stop = True

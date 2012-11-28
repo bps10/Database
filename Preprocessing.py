@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Nov 01 12:19:20 2012
-
-@author: Brian
-"""
-
 import numpy as np
 
 
@@ -20,11 +13,17 @@ def wavefilter(data, maxlevel = 6):
         
     Filter a multi-channel signal using wavelet filtering.
 	
-    data     - n x m array, n=number of channels in the signal, 
-				m=number of samples in the signal
-    maxlevel - the level of decomposition to perform on the data. This integer
-				implicitly defines the cutoff frequency of the filter.
-				Specifically, cutoff frequency = samplingrate/(2^(maxlevel+1))
+    :params data: n x m array, \
+                    n=number of channels in the signal, \
+                    m=number of samples in the signal 
+    :params maxlevel: the level of decomposition to perform on the data. This \
+                        integer implicitly defines the cutoff frequency of the \ 
+                        filter. Specifically, \
+                        cutoff frequency = samplingrate/(2^(maxlevel+1))
+                        
+    :returns: filtered data in same shape as input data
+    
+    
     """
 	
 
@@ -53,7 +52,18 @@ def wavefilter(data, maxlevel = 6):
         return fdata # Otherwise, give back the 2D array
         
 def spikeThreshold(bits, option = 0):
-
+    """
+    
+    A very simple routine for finding the start and end of a spike
+    
+    :param bits: a thresholded spike train. This should be bianary.
+    :type bits: np.array
+    :param option: decide wether to return the spike beginnings and endings in \
+                    the same array (option = 0) or seperately (option = 1)
+    
+    
+    """
+    
     # make sure all runs of ones are well-bounded
     bounded = np.hstack(([0], bits, [0]))
     # get 1 at run starts and -1 at run ends

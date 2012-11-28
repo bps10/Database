@@ -10,3 +10,12 @@ obj
 
 # mstest test results
 TestResults
+
+# HDF5
+*.h5
+
+/Oct0212Bc8
+
+/Extra
+
+/dist

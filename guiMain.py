@@ -5,21 +5,19 @@ Created on Fri Oct 26 13:30:48 2012
 @author: Brian
 """
 # guidata imports
-from guidata.dataset.qtwidgets import DataSetShowGroupBox
 from guidata.qt.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                               QMainWindow, QLineEdit, QTreeWidget, QTreeWidgetItem, 
                               QCheckBox, QSpacerItem, QLabel, QFont, QDockWidget,
                               QMessageBox, QGroupBox, QDialog, QComboBox,
                               QFileDialog)
 from guidata.qt.QtCore import (SIGNAL, Qt, QRect)
-from guidata.dataset.dataitems import StringItem, DirectoryItem, FileOpenItem, ChoiceItem
-from guidata.dataset.datatypes import DataSet
 from guidata.qthelpers import create_action, add_actions, get_std_icon
 
 # user defined imports
 import Database as Db
 import Preprocessing as pp
 from ProgressBar import BusyBar
+
 # general
 import numpy as np
 import os
@@ -39,8 +37,13 @@ class FilterTestWidget(QWidget):
     parent: parent widget (QWidget)
     x, y: NumPy arrays
     func: function object (the signal filter to be tested)
+    
+    .. todo::
+       Write documentation!
     """
     def __init__(self, parent):
+        """
+        """
         QWidget.__init__(self, parent)
         
         self.data = Dbase(DBaseName = None)
@@ -54,6 +57,8 @@ class FilterTestWidget(QWidget):
         #---
         
     def setup_widget(self, title):
+        """
+        """
         #---Create the plot widget:
         self.plot = CurvePlot(self)
         self.curve_item = (make.curve([], [], color='b'))
@@ -115,7 +120,8 @@ class FilterTestWidget(QWidget):
 
                                              
     def run_preprocess(self):
-        
+        """
+        """        
         if self.wavelet.isChecked():
             try:
                 yData = self.y1Data
@@ -150,6 +156,8 @@ class FilterTestWidget(QWidget):
 
 
     def add_data_to_DBase(self):
+        """
+        """
         self.checkAddData.setText("Are you sure you want to add filtered spikes (green trace) to the DB?")
         self.checkAddData.setInformativeText("This will overwrite the existing spike data.")
         self.checkAddData.setStandardButtons(QMessageBox.Yes | QMessageBox.No )
@@ -172,6 +180,8 @@ class FilterTestWidget(QWidget):
 
     
     def update_curve(self):
+        """
+        """
         #---Update curve
         
         self.curve_item.set_data(self.xData, self.y1Data)
@@ -298,7 +308,13 @@ class FilterTestWidget(QWidget):
             
             
 class databaseListModel(QTreeWidget):
+    """
+    """
+        
     def __init__(self, DBaseName = None):
+        """
+        """
+        
         QTreeWidget.__init__(self)
         self.DataBasesOpen = []
         self.DataBasesOpenPath = []
@@ -310,6 +326,9 @@ class databaseListModel(QTreeWidget):
         self.constructTree(DBname = DBaseName)
     
     def constructTree(self, DBname):   
+        """
+        """
+        
         if DBname == None:
             root = QTreeWidgetItem(self)
         
@@ -363,9 +382,15 @@ class databaseListModel(QTreeWidget):
             #QTimer.singleShot(10000, self.busyBar.Kill)
             
     def stopBar(self):
+        """
+        """
+        
         self.busyBar.Kill()   
         
     def refreshTree(self): 
+        """
+        """
+        
         self.clear()
         for DB in self.DataBasesOpen:
             self.constructTree(DB)        
@@ -373,19 +398,30 @@ class databaseListModel(QTreeWidget):
 
         
     def AppendDatabasesOpen(self, DBname):
+        """
+        """
+        
         self.DataBasesOpenPath.append(DBname)
         self.DataBasesOpen.append(os.path.basename(DBname))
         print 'databases open: ', self.DataBasesOpen   
     
     def CloseDatabase(self, DBname):
-
+        """
+        """
+        
         self.DataBasesOpen.remove(DBname )
         #self.DataBasesOpenPath.remove(endswith(DBname + '.h5'))        
         
     def GetOpenDatabases(self):
+        """
+        """
+        
         return self.DataBasesOpen
 
     def isOpen(self, DBname):
+        """
+        """
+        
         truth = False
         for DB in self.DataBasesOpen:
             if DB == DBname:
@@ -397,7 +433,12 @@ class databaseListModel(QTreeWidget):
 
         
 class Dbase():
+    """
+    """
+        
     def __init__(self, DBaseName, PRINT = 0):
+        """
+        """
         
         self.Data = Db.Database()
         
@@ -415,13 +456,20 @@ class Dbase():
                 self.Data.CreateDatabase(DBaseName)    
         
     def Query(self, NeuronName = 'Oct0212Bc8', Epoch = 'epoch040', DataName = 'rawData'):
+        """
+        """
+        
         return self.Data.QueryDatabase( NeuronName, Epoch, DataName)
         
     def AddData(self, NeuronName, Directory):
+        """
+        """
         
         self.Data.ImportAllData(NeuronName, Directory, progBar = 0)   
 
     def GetTree(self, NeuronName = None):
+        """
+        """
         
         if NeuronName == None:
             tree = self.Data.GetChildList()
@@ -435,7 +483,12 @@ class Dbase():
     
     
 class Window(QMainWindow):
+    """
+    """
+        
     def __init__(self):
+        """
+        """
         QMainWindow.__init__(self)
         self.setWindowTitle("Neuron Database")
         self.setWindowIcon(get_icon('guiqwt.png'))
@@ -514,6 +567,9 @@ class Window(QMainWindow):
         
             
     def add_plot(self, title):
+        """
+        """
+        
         self.widget = FilterTestWidget(self)
         self.widget.setup_widget(title)
         self.centralWidget().layout().addWidget(self.widget)
@@ -523,6 +579,9 @@ class Window(QMainWindow):
 
         
     def setup_window(self):
+        """
+        """
+        
         #---Add toolbar and register manager tools
         toolbar = self.addToolBar("tools")
         self.manager.add_toolbar(toolbar, id(toolbar))
@@ -530,15 +589,24 @@ class Window(QMainWindow):
         #---
         
     def closeEvent(self, event):
+        """
+        """
+        
         self.console.exit_interpreter()
         event.accept()       
 
     def findOpenDBases(self):
+        """
+        """
+        
         return self.widget.databaseScroll.DataBasesOpen
         
     ### popup actions: 
         
     def add_newData(self):
+        """
+        """
+        
         DBname = Popup(self.findOpenDBases(), 
                        textMessage = "add data to a database:",
                        style = 4)
@@ -562,6 +630,9 @@ class Window(QMainWindow):
                 
 
     def open_Database(self):
+        """
+        """
+        
         DBname = Popup(self.findOpenDBases(), 
                        textMessage = "select database to open",
                        style = 3)
@@ -579,6 +650,8 @@ class Window(QMainWindow):
          
                 
     def create_Database(self):
+        """
+        """
         DBname = Popup(self.findOpenDBases(), 
                        textMessage = "enter name of new database",
                        style = 2)
@@ -595,6 +668,9 @@ class Window(QMainWindow):
             
         
     def delete_Neuron(self):
+        """
+        """
+        
         DBname = Popup(self.findOpenDBases(), 
                        textMessage = "enter name of neuron to delete",
                        style = 1)
@@ -620,6 +696,9 @@ class Window(QMainWindow):
          
          
     def close_Database(self):
+        """
+        """
+        
         DBname = Popup(self.findOpenDBases(), 
                        textMessage = "select database to close",
                        style = 0)
@@ -635,7 +714,13 @@ class Window(QMainWindow):
 
 
 class Popup(QDialog):
+    """
+    """
+    
     def __init__(self, openDB, textMessage = " ", style = 0):
+        """
+        """
+        
         QDialog.__init__(self)
         self.style = style
         
@@ -779,6 +864,9 @@ class Popup(QDialog):
 
             
     def returnSelection(self):
+        """
+        """
+        
         if self.style == 0:
             self.selection = self.openDB[self.name.currentIndex()]
 
@@ -803,6 +891,9 @@ class Popup(QDialog):
             self.close()    
 
     def closePopup(self):
+        """
+        """
+        
         self.selection = None
         
         if self.style == 4:
@@ -812,7 +903,11 @@ class Popup(QDialog):
             self.close()
         
 def main():
-    """Testing this simple Qt/guiqwt example"""
+    """
+    
+    Testing this simple Qt/guiqwt example
+    
+    """
     
     from guidata.qt.QtGui import QApplication
     
