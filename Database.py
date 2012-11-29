@@ -49,14 +49,16 @@ class Database():
         
         Create a new HDF5 database.
         
-        :param FileName:    provide a name for a new HDF5 database. DO NOT include
-                            .h5 at the end - h5 suffix is automatically appended.
+        :param FileName:    provide a name for a new HDF5 database. **DO NOT** \
+                            include .h5 at the end - h5 suffix is \
+                            automatically appended.
         :type FileName: str
         
         :returns: creates a new HDF5 database.
         
         """
-        self.file = tables.openFile(FileName + '.h5', mode = "w", title = 'NeuronAnalysis')
+        self.file = tables.openFile(FileName + '.h5', mode = "w", 
+                                    title = 'NeuronAnalysis')
 
 
     def AddData2Database(self, DataName, Data, GroupName, Parents = None):
@@ -68,16 +70,16 @@ class Database():
         :type DataName: str
         :param Data: data to be entered.
         :type Data: np.array
-        :param GroupName: provide the location in the open database to store the new data.
+        :param GroupName: provide the location in the open database to store \
+        the new data.
         :type param: str
-        :param Parents: provide name of parents if they exist. Not currently active.
+        :param Parents: provide name of parents if they exist. Not currently \
+        active.
         :type Parents: str
         
         .. note::
            Do not use Parent option right now. It is untested and likely to fail.
            
-        
-        
         """
         
         if Parents == None:
@@ -90,7 +92,8 @@ class Database():
                 
         filters = tables.Filters(complevel=1, complib='zlib', fletcher32=True)
         atom = tables.Atom.from_dtype(Data.dtype)
-        ds = self.file.createCArray(eval(loc), DataName, atom, Data.shape, filters = filters)
+        ds = self.file.createCArray(eval(loc), DataName, atom, Data.shape, 
+                                    filters = filters)
         ds[:] = Data
 
 
