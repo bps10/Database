@@ -135,24 +135,24 @@ class Database():
         """
         self.file = h5.File(FileName + '.h5', mode="w")                                               
 
-    def CreateGroup(self, GroupName, Parent=None):
+    def CreateGroup(self, GroupName, Parents=None):
         """
         Create a group in an HDF5 database.
 
         :param GroupName: provide a name for the group.
         :type GroupName: str
-        :param Parent: provide names of parent nodes if they exist.
-        :type Parent: str
+        :param Parents: provide names of parent nodes if they exist.
+        :type Parents: str
 
         :returns: updates HDF5 database with new group.
 
         """
-        if Parent is None:
+        if Parents is None:
 
             self.file.create_group('/' + GroupName)
 
         else:
-            parents = self._formatParents(Parent)
+            parents = self._formatParents(Parents)
             self.file.create_group('/' + parents + GroupName)
 
     def Exists(self, FILE, Parents=None):
@@ -178,8 +178,16 @@ class Database():
             TF = self.file[parents].__contains__(FILE)
 
         return TF
+    
+    def getNameList(self):
+        """
+        """
+        list_of_names = []
+        self.file.visit(list_of_names.append)
         
     def getAllFiles(self, Directory, suffix='.mat', subdirectories=0):
+        """
+        """
         self.DirFiles = getAllFiles(Directory, suffix, subdirectories)
 
     def GetChildList(self, FILE = None, parent = None):
@@ -215,7 +223,8 @@ class Database():
         
     def ImportAllData(self, NeuronName, Directory, GitDirectory=None,
             progBar=0):
-        """This one calls ImportDataFromRiekeLab to load a Rieke lab .mat file or
+        """This one calls ImportDataFromRiekeLab to load a Rieke lab .mat file 
+        or
         ImportHDF5 to import data from another H5 file depending on the file
         ending.
 
@@ -241,14 +250,26 @@ class Database():
         self.file.flush()
         #self.CloseDatabase()
 
+    def ImportHDF5(self, FileName, Directory=None):
+        """
+        """
+        f = h5.File(Directory + FileName)
+        
+        l = []
+        fil = lambda name, obj: (l.append([name, a, v]) for a, v in obj.attrs.iteritems())
+    
+        f.visititems(fil)
+        for row in l:
+            self.AddData2Database(row[1], row[2], [row[0]])
+            
     def ImportDataFromRiekeLab(self, FileName, DataName):
         """
         This is the big one for importing data.
 
         :param FileName: name of the file to import.
         :type FileName: str
-        :param NeuronName: name of the neuron importing.
-        :type NeuronName: str
+        :param DataName: name of the neuron importing.
+        :type DataName: str
 
         :returns: updated HDF5 database.
 
@@ -416,7 +437,7 @@ class Database():
             raise DatabaseError('{0} database does not exist'.format(
                             DatabaseName))
 
-    def QueryDatabase(self, DataName, Parent):
+    def QueryDatabase(self, DataName, Parents):
         """
         Query a database.
 
@@ -428,13 +449,13 @@ class Database():
         :returns: result of query in a numpy.array()
 
         """
-        if Parent == None:
+        if Parents == None:
             parents = '/'
         else:
-            parents = self._formatParents(Parent)
+            parents = self._formatParents(Parents)
         return self.file[parents + DataName].value
                             
-    def RemoveNeuron(self, NeuronName, option=0):
+    def DeleteData(self, DataName, Parents=None, option=0):
         """
 
         Remove a neuron from the database. Uses the recursive option to force
@@ -456,23 +477,30 @@ class Database():
 
         if option == 0:
             decision = raw_input('Are you absolutely sure you want to \
-            delete this group permenently? (y/n): ')
+            delete this group and all of its children permenently? (y/n): ')
             if decision.lower() == 'y' or decision.lower() == 'yes':
-                deleteHandle = self.file.removeNode
-                deleteHandle('/' + NeuronName, recursive=1)
+                if Parents != None:
+                    parents = self._formatParents(Parents)
+                else:
+                    parents = ''
+                deleteHandle = self.file[parents + DataName]
+                del deleteHandle
                 self.file.flush()
-                print '{0} successfully deleted'.format(NeuronName)
+                print '{0} successfully deleted'.format(DataName)
             else:
                 print 'Ok, nothing changed.'
 
         if option == 1:
 
-            deleteHandle = self.file.removeNode
-            #print 'hang tight. deleting in process...'
-            deleteHandle('/' + NeuronName, recursive=1)
+            if Parents != None:
+                parents = self._formatParents(Parents)
+            else:
+                parents = ''
+            deleteHandle = self.file[parents + DataName]
+            del deleteHandle
             self.file.flush()
-            
-            
+
+     
 def getAllFiles(Directory, suffix = None, subdirectories=1):
     """
 
