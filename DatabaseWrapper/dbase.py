@@ -12,8 +12,7 @@ class Database():
     Utilizes the h5py library.
     
     .. todo:
-        1. Finish childlist
-        2. Fuller search / query functions
+        1. Fuller search / query functions
 
     """
     def __init__(self):

@@ -23,3 +23,6 @@ TestResults
 /dist
 
 *.nja
+
+*.spyderproject
+*.spyderworkspace
