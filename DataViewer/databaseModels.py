@@ -73,7 +73,7 @@ class treeList(qg.QTreeWidget):
                                     self.paramName.append(param)
                                     
             self.Db.Data.CloseDatabase(PRINT=1)
-            self.busyBar.Kill()
+            #self.busyBar.Kill()
             #QTimer.singleShot(10000, self.busyBar.Kill)
             
     #def stopBar(self):

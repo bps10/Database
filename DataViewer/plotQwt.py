@@ -16,10 +16,7 @@ import datetime as dt
 
 class PlotWidget(qg.QWidget):
     """
-    Filter testing widget
-    parent: parent widget (QWidget)
-    x, y: NumPy arrays
-    func: function object (the signal filter to be tested)
+
     """
     def __init__(self, parent):
         qg.QWidget.__init__(self, parent)
