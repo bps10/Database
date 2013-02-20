@@ -5,6 +5,10 @@ import PyQt4.QtGui as qg
 import PyQt4.QtCore as qc
 
 class Popup(qg.QDialog):
+    """
+    .. todo:: 
+        1. break down styles into methods
+    """
     def __init__(self, openDB, textMessage = " ", style = 0):
         qg.QDialog.__init__(self)
         self.style = style
@@ -136,6 +140,8 @@ class Popup(qg.QDialog):
 
             
     def returnSelection(self):
+        """
+        """
         if self.style == 0:
             self.selection = self.openDB[self.name.currentIndex()]
 
@@ -160,6 +166,8 @@ class Popup(qg.QDialog):
             self.close()    
 
     def closePopup(self):
+        """
+        """
         self.selection = None
         
         if self.style == 4:

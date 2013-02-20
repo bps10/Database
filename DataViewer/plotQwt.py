@@ -5,7 +5,7 @@ import PyQt4.QtGui as qg
 import PyQt4.QtCore as qc
 
 from databaseModels import Dbase, databaseListModel
-import Utilities.Preprocessing as pp
+import Utilities.preprocessing as pp
 #---Import plot widget base class
 from guiqwt.curve import CurvePlot
 from guiqwt.builder import make
@@ -35,7 +35,8 @@ class PlotWidget(qg.QWidget):
         #---
         
     def setup_widget(self, title):
-        #---Create the plot widget:
+        """Create the plot widget:
+        """
         self.plot = CurvePlot(self)
         self.curve_item = (make.curve([], [], color='b'))
         self.second_curve_item = (make.curve([], [], color='g'))
@@ -99,7 +100,8 @@ class PlotWidget(qg.QWidget):
 
                                              
     def run_preprocess(self):
-        
+        """
+        """
         if self.wavelet.isChecked():
             try:
                 yData = self.y1Data
@@ -134,6 +136,8 @@ class PlotWidget(qg.QWidget):
 
 
     def add_data_to_DBase(self):
+        """
+        """
         self.checkAddData.setText("Are you sure you want to add filtered spikes (green trace) to the DB?")
         self.checkAddData.setInformativeText("This will overwrite the existing spike data.")
         self.checkAddData.setStandardButtons(qg.QMessageBox.Yes | qg.QMessageBox.No )
@@ -160,24 +164,24 @@ class PlotWidget(qg.QWidget):
 
     
     def update_curve(self):
-        #---Update curve
-        
+        """Update curve
+        """
         self.curve_item.set_data(self.xData, self.y1Data)
         self.second_curve_item.set_data(self.xData, self.y2Data)
         self.plot.replot()
         self.plot.do_autoscale()
         
     def but_clicked(self):
-        '''
+        """
         when refresh button is clicked, the tree is refreshed
-        '''
+        """
         self.databaseScroll.refreshTree()
     
     def double_clicked(self):
-        '''
+        """
         when a name button is clicked, iterate over the model, 
         find the neuron with this name, and set the treeviews current item
-        '''
+        """
         print 'here'
         index = self.databaseScroll.TabWid.GetCurrentTab()
         print index

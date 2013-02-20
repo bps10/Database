@@ -8,6 +8,8 @@ import os
 import DatabaseWrapper.dbase as Db
 
 class treeList(qg.QTreeWidget):
+    """
+    """
     def __init__(self, DBaseName = None):
         qg.QTreeWidget.__init__(self)
         self.DataBasesOpen = []
@@ -20,6 +22,8 @@ class treeList(qg.QTreeWidget):
         self.constructTree(DBname = DBaseName)
     
     def constructTree(self, DBname):   
+        """
+        """
         if DBname == None:
             pass
         
@@ -76,6 +80,8 @@ class treeList(qg.QTreeWidget):
     #    self.busyBar.Kill()   
         
     def refreshTree(self): 
+        """
+        """
         self.clear()
         for DB in self.DataBasesOpen:
             self.constructTree(DB)        
@@ -83,18 +89,25 @@ class treeList(qg.QTreeWidget):
 
         
     def AppendDatabasesOpen(self, DBname):
+        """
+        """
         self.DataBasesOpenPath.append(DBname)
         self.DataBasesOpen.append(os.path.basename(DBname))
     
     def CloseDatabase(self, DBname):
-
+        """
+        """
         self.DataBasesOpen.remove(DBname)
         #self.DataBasesOpenPath.remove(endswith(DBname + '.h5'))        
         
     def GetOpenDatabases(self):
+        """
+        """
         return self.DataBasesOpen
 
     def isOpen(self, DBname):
+        """
+        """
         truth = False
         for DB in self.DataBasesOpen:
             if DB == DBname:
@@ -106,6 +119,8 @@ class treeList(qg.QTreeWidget):
 
             
 class databaseListModel(qg.QWidget):
+    """
+    """
     def __init__(self, DBaseName = None):
         qg.QWidget.__init__(self)
         self.TabWid = qg.QTabWidget(self)
@@ -133,6 +148,8 @@ class databaseListModel(qg.QWidget):
         print 'here idiot'
         
     def switchTab(self, index):
+        """
+        """
         print 'switching tabs!'
         print index
         print self.DataBasesOpen[index]
@@ -140,6 +157,8 @@ class databaseListModel(qg.QWidget):
         #self.here = treeList(self.DataBasesOpen[index])
         
     def closeTab(self, index):
+        """
+        """
         print index
         print self.DataBasesOpen[index]
         self.TabWid.removeTab(index)
@@ -148,14 +167,18 @@ class databaseListModel(qg.QWidget):
         self.here = treeList(self.DataBasesOpen[index])
         
     def onTabClick(self, index):
+        """
+        """
         print 'woohoo!'
         
     def GetCurrentTab(self):
+        """
+        """
         return self.TabWid.currentIndex()
         
     def OpenDatabases(self, DBaseName):
-
-        
+        """
+        """
         if self.TabWid.children()[1].tabText(0) == 'Empty':
             self.TabWid.removeTab(0)
         self.here = treeList(DBaseName)
@@ -165,16 +188,21 @@ class databaseListModel(qg.QWidget):
         print self.TreeWid.neuronName[0]  
         
     def AppendDatabasesOpen(self, DBaseName):
+        """
+        """
         self.DataBasesOpenPath.append(DBaseName)
         self.DataBasesOpen.append(os.path.basename(DBaseName))        
 
     def refreshTree(self): 
-        
+        """
+        """
         self.TreeWid = self.TabWid.children()[0].currentWidget()
         self.TreeWid.refreshTree()
         self.TabWid.update()
 
     def CloseDatabase(self, DBname):
+        """
+        """
         self.here.clear()
         self.DataBasesOpen.remove(DBname)
         #self.DataBasesOpenPath.remove(endswith(DBname + '.h5'))   
@@ -183,6 +211,8 @@ class databaseListModel(qg.QWidget):
 
         
 class Dbase():
+    """
+    """
     def __init__(self, DBaseName, PRINT = 0):
         
         self.Data = Db.Database()
@@ -201,14 +231,18 @@ class Dbase():
                 self.Data.CreateDatabase(DBaseName)    
         
     def Query(self, NeuronName = 'Oct0212Bc8', Epoch = 'epoch040', DataName = 'rawData'):
+        """
+        """        
         return self.Data.QueryDatabase( NeuronName, Epoch, DataName)
         
     def AddData(self, NeuronName, Directory):
-        
+        """
+        """
         self.Data.ImportAllData(NeuronName, Directory, progBar = 0)   
 
     def GetTree(self, NeuronName = None):
-        
+        """
+        """
         if NeuronName == None:
             tree = self.Data.GetChildList()
         else:

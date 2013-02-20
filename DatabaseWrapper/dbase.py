@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from scipy.io import loadmat
+import scipy.io as sio
 import numpy as np
 import glob as glob
 import h5py as h5
@@ -38,6 +38,11 @@ class Database():
             return parentTree
         else:
             raise DatabaseError('Parents must be a string or list.')
+
+    def _fillIter(self, name, obj):
+            
+        for attr, val in obj.attrs.iteritems():
+            self.list.append([attr, val, name])
                 
     def AddData2Database(self, DataName, Data, Parents=None, 
                          comp=True):
@@ -321,11 +326,6 @@ class Database():
 
         for row in self.list:
             self.AddData2Database(row[0], row[1], [FileName, row[2]])
-
-    def _fillIter(self, name, obj):
-            
-        for attr, val in obj.attrs.iteritems():
-            self.list.append([attr, val, name])
             
     def ImportDataFromRiekeLab(self, FileName, DataName):
         """
@@ -466,11 +466,11 @@ class Database():
 
         if Directory is None:
 
-            self.NeuronData = loadmat(FileName)
+            self.NeuronData = sio.loadmat(FileName)
 
         else:
             
-            self.NeuronData = loadmat(Directory + FileName)
+            self.NeuronData = sio.loadmat(Directory + FileName)
             
     def OpenDatabase(self, DatabaseName, PRINT=0):
         """

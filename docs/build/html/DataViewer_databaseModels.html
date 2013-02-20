@@ -1,0 +1,199 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>database models &mdash; DataViewer 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="DataViewer 0.1.0 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">DataViewer 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-DataViewer.databaseModels">
+<span id="database-models"></span><h1>database models<a class="headerlink" href="#module-DataViewer.databaseModels" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="DataViewer.databaseModels.Dbase">
+<em class="property">class </em><tt class="descclassname">DataViewer.databaseModels.</tt><tt class="descname">Dbase</tt><big>(</big><em>DBaseName</em>, <em>PRINT=0</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#Dbase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.Dbase" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="DataViewer.databaseModels.Dbase.AddData">
+<tt class="descname">AddData</tt><big>(</big><em>NeuronName</em>, <em>Directory</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#Dbase.AddData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.Dbase.AddData" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.Dbase.GetTree">
+<tt class="descname">GetTree</tt><big>(</big><em>NeuronName=None</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#Dbase.GetTree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.Dbase.GetTree" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.Dbase.Query">
+<tt class="descname">Query</tt><big>(</big><em>NeuronName='Oct0212Bc8'</em>, <em>Epoch='epoch040'</em>, <em>DataName='rawData'</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#Dbase.Query"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.Dbase.Query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="DataViewer.databaseModels.databaseListModel">
+<em class="property">class </em><tt class="descclassname">DataViewer.databaseModels.</tt><tt class="descname">databaseListModel</tt><big>(</big><em>DBaseName=None</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#databaseListModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.databaseListModel" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="DataViewer.databaseModels.databaseListModel.AppendDatabasesOpen">
+<tt class="descname">AppendDatabasesOpen</tt><big>(</big><em>DBaseName</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#databaseListModel.AppendDatabasesOpen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.databaseListModel.AppendDatabasesOpen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.databaseListModel.CloseDatabase">
+<tt class="descname">CloseDatabase</tt><big>(</big><em>DBname</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#databaseListModel.CloseDatabase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.databaseListModel.CloseDatabase" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.databaseListModel.GetCurrentTab">
+<tt class="descname">GetCurrentTab</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#databaseListModel.GetCurrentTab"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.databaseListModel.GetCurrentTab" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.databaseListModel.OpenDatabases">
+<tt class="descname">OpenDatabases</tt><big>(</big><em>DBaseName</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#databaseListModel.OpenDatabases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.databaseListModel.OpenDatabases" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.databaseListModel.closeTab">
+<tt class="descname">closeTab</tt><big>(</big><em>index</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#databaseListModel.closeTab"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.databaseListModel.closeTab" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.databaseListModel.onTabClick">
+<tt class="descname">onTabClick</tt><big>(</big><em>index</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#databaseListModel.onTabClick"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.databaseListModel.onTabClick" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.databaseListModel.refreshTree">
+<tt class="descname">refreshTree</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#databaseListModel.refreshTree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.databaseListModel.refreshTree" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.databaseListModel.switchTab">
+<tt class="descname">switchTab</tt><big>(</big><em>index</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#databaseListModel.switchTab"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.databaseListModel.switchTab" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="DataViewer.databaseModels.treeList">
+<em class="property">class </em><tt class="descclassname">DataViewer.databaseModels.</tt><tt class="descname">treeList</tt><big>(</big><em>DBaseName=None</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#treeList"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.treeList" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="DataViewer.databaseModels.treeList.AppendDatabasesOpen">
+<tt class="descname">AppendDatabasesOpen</tt><big>(</big><em>DBname</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#treeList.AppendDatabasesOpen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.treeList.AppendDatabasesOpen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.treeList.CloseDatabase">
+<tt class="descname">CloseDatabase</tt><big>(</big><em>DBname</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#treeList.CloseDatabase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.treeList.CloseDatabase" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.treeList.GetOpenDatabases">
+<tt class="descname">GetOpenDatabases</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#treeList.GetOpenDatabases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.treeList.GetOpenDatabases" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.treeList.constructTree">
+<tt class="descname">constructTree</tt><big>(</big><em>DBname</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#treeList.constructTree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.treeList.constructTree" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.treeList.isOpen">
+<tt class="descname">isOpen</tt><big>(</big><em>DBname</em><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#treeList.isOpen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.treeList.isOpen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="DataViewer.databaseModels.treeList.refreshTree">
+<tt class="descname">refreshTree</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/DataViewer/databaseModels.html#treeList.refreshTree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#DataViewer.databaseModels.treeList.refreshTree" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/DataViewer_databaseModels.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">DataViewer 0.1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, B.P. Schmidt.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

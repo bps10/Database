@@ -1,0 +1,387 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>DataViewer.plotQwt &mdash; DataViewer 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="DataViewer 0.1.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">DataViewer 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for DataViewer.plotQwt</h1><div class="highlight"><pre>
+<span class="c"># -*- coding: utf-8 -*-</span>
+<span class="c"># user defined imports</span>
+<span class="c"># PyQt4 imports</span>
+<span class="kn">import</span> <span class="nn">PyQt4.QtGui</span> <span class="kn">as</span> <span class="nn">qg</span>
+<span class="kn">import</span> <span class="nn">PyQt4.QtCore</span> <span class="kn">as</span> <span class="nn">qc</span>
+
+<span class="kn">from</span> <span class="nn">databaseModels</span> <span class="kn">import</span> <span class="n">Dbase</span><span class="p">,</span> <span class="n">databaseListModel</span>
+<span class="kn">import</span> <span class="nn">Utilities.Preprocessing</span> <span class="kn">as</span> <span class="nn">pp</span>
+<span class="c">#---Import plot widget base class</span>
+<span class="kn">from</span> <span class="nn">guiqwt.curve</span> <span class="kn">import</span> <span class="n">CurvePlot</span>
+<span class="kn">from</span> <span class="nn">guiqwt.builder</span> <span class="kn">import</span> <span class="n">make</span>
+
+<span class="c"># general imports</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">datetime</span> <span class="kn">as</span> <span class="nn">dt</span>
+
+<div class="viewcode-block" id="PlotWidget"><a class="viewcode-back" href="../../DataViewer_plotQwt.html#DataViewer.plotQwt.PlotWidget">[docs]</a><span class="k">class</span> <span class="nc">PlotWidget</span><span class="p">(</span><span class="n">qg</span><span class="o">.</span><span class="n">QWidget</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filter testing widget</span>
+<span class="sd">    parent: parent widget (QWidget)</span>
+<span class="sd">    x, y: NumPy arrays</span>
+<span class="sd">    func: function object (the signal filter to be tested)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="n">qg</span><span class="o">.</span><span class="n">QWidget</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">Dbase</span><span class="p">(</span><span class="n">DBaseName</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">)</span> <span class="c">#self.data.Query()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y2Data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xData</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">)</span> <span class="c">#np.arange(0, len(self.yData))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setMinimumSize</span><span class="p">(</span><span class="mi">700</span><span class="p">,</span> <span class="mi">600</span><span class="p">)</span>
+        <span class="c">#---guiqwt related attributes:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve_item</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="c">#---</span>
+        
+<div class="viewcode-block" id="PlotWidget.setup_widget"><a class="viewcode-back" href="../../DataViewer_plotQwt.html#DataViewer.plotQwt.PlotWidget.setup_widget">[docs]</a>    <span class="k">def</span> <span class="nf">setup_widget</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create the plot widget:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot</span> <span class="o">=</span> <span class="n">CurvePlot</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve_item</span> <span class="o">=</span> <span class="p">(</span><span class="n">make</span><span class="o">.</span><span class="n">curve</span><span class="p">([],</span> <span class="p">[],</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;b&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">second_curve_item</span> <span class="o">=</span> <span class="p">(</span><span class="n">make</span><span class="o">.</span><span class="n">curve</span><span class="p">([],</span> <span class="p">[],</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;g&#39;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">curve_item</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">add_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">second_curve_item</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">set_antialiasing</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span> <span class="o">=</span> <span class="n">databaseListModel</span><span class="p">(</span><span class="n">DBaseName</span> <span class="o">=</span> <span class="bp">None</span><span class="p">)</span>
+
+        <span class="n">spacer</span> <span class="o">=</span> <span class="n">qg</span><span class="o">.</span><span class="n">QSpacerItem</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span><span class="mi">40</span><span class="p">)</span>
+        
+        <span class="n">preprocessData</span> <span class="o">=</span> <span class="n">qg</span><span class="o">.</span><span class="n">QGroupBox</span><span class="p">(</span><span class="s">u&quot;preprocess data&quot;</span><span class="p">)</span>
+        
+        <span class="c"># create buttons</span>
+        <span class="n">listButton</span> <span class="o">=</span> <span class="n">qg</span><span class="o">.</span><span class="n">QPushButton</span><span class="p">(</span><span class="s">u&quot;Refresh list&quot;</span><span class="p">)</span>
+        <span class="n">processButton</span> <span class="o">=</span> <span class="n">qg</span><span class="o">.</span><span class="n">QPushButton</span><span class="p">(</span><span class="s">u&quot;       run preprocessing       &quot;</span><span class="p">)</span>
+        <span class="n">addwaveletButton</span> <span class="o">=</span> <span class="n">qg</span><span class="o">.</span><span class="n">QPushButton</span><span class="p">(</span><span class="s">u&quot;  add wavelet spikes to DB  &quot;</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkAddData</span> <span class="o">=</span> <span class="n">qg</span><span class="o">.</span><span class="n">QMessageBox</span><span class="p">()</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">wavelet</span> <span class="o">=</span> <span class="n">qg</span><span class="o">.</span><span class="n">QCheckBox</span><span class="p">(</span><span class="s">u&quot;wavelet filter      &quot;</span><span class="p">)</span>
+        <span class="n">label1</span> <span class="o">=</span> <span class="n">qg</span><span class="o">.</span><span class="n">QLabel</span><span class="p">(</span><span class="s">&quot;enter threshold value: &quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waveletThreshold</span> <span class="o">=</span> <span class="n">qg</span><span class="o">.</span><span class="n">QLineEdit</span><span class="p">(</span><span class="s">u&quot;10&quot;</span><span class="p">)</span>
+
+        
+
+        <span class="c"># connect user actions with methods:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">listButton</span><span class="p">,</span> <span class="n">qc</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s">&#39;clicked()&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">but_clicked</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">processButton</span><span class="p">,</span> <span class="n">qc</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s">&#39;clicked()&#39;</span><span class="p">),</span> 
+                     <span class="bp">self</span><span class="o">.</span><span class="n">run_preprocess</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">TreeWid</span><span class="p">,</span> 
+                     <span class="n">qc</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s">&quot;doubleClicked(QModelIndex)&quot;</span><span class="p">),</span> 
+                     <span class="bp">self</span><span class="o">.</span><span class="n">double_clicked</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">addwaveletButton</span><span class="p">,</span> <span class="n">qc</span><span class="o">.</span><span class="n">SIGNAL</span><span class="p">(</span><span class="s">&#39;clicked()&#39;</span><span class="p">),</span> 
+                     <span class="bp">self</span><span class="o">.</span><span class="n">add_data_to_DBase</span><span class="p">)</span>
+        
+        <span class="n">vlayout</span> <span class="o">=</span> <span class="n">qg</span><span class="o">.</span><span class="n">QVBoxLayout</span><span class="p">()</span>
+        <span class="n">hlayout</span> <span class="o">=</span> <span class="n">qg</span><span class="o">.</span><span class="n">QHBoxLayout</span><span class="p">()</span>
+
+        
+        <span class="n">vlayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">TabWid</span><span class="p">)</span>
+        <span class="n">vlayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">listButton</span><span class="p">)</span>
+
+        <span class="n">vlayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="p">)</span>
+        <span class="n">vlayout</span><span class="o">.</span><span class="n">addSpacerItem</span><span class="p">(</span><span class="n">spacer</span><span class="p">)</span>
+        
+        
+        <span class="n">hlayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelet</span><span class="p">)</span>
+        <span class="n">hlayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">label1</span><span class="p">)</span>
+        <span class="n">hlayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waveletThreshold</span><span class="p">)</span>
+
+        <span class="n">hlayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">processButton</span><span class="p">)</span>        
+        <span class="n">hlayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">addwaveletButton</span><span class="p">)</span>
+        <span class="n">preprocessData</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="n">hlayout</span><span class="p">)</span>
+        <span class="n">vlayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">preprocessData</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="n">vlayout</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_curve</span><span class="p">()</span>
+
+                                             </div>
+<div class="viewcode-block" id="PlotWidget.run_preprocess"><a class="viewcode-back" href="../../DataViewer_plotQwt.html#DataViewer.plotQwt.PlotWidget.run_preprocess">[docs]</a>    <span class="k">def</span> <span class="nf">run_preprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelet</span><span class="o">.</span><span class="n">isChecked</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">yData</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span>
+                <span class="n">waveletFilt</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">wavefilter</span><span class="p">(</span><span class="n">yData</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span> <span class="o">=</span> <span class="n">waveletFilt</span>
+                
+                <span class="n">thresh</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waveletThreshold</span><span class="o">.</span><span class="n">displayText</span><span class="p">())</span>
+                <span class="n">foo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span> <span class="o">&gt;</span> <span class="n">thresh</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">y2Data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spikes</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">spikeThreshold</span><span class="p">(</span><span class="n">foo</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">y2Data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y2Data</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span><span class="p">)</span>
+                
+                <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">currentIndex</span><span class="p">()</span>
+                <span class="n">root</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+                <span class="n">neuron</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+                <span class="n">epoch</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>  
+                
+                <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">DataBasesOpen</span><span class="p">[</span><span class="n">root</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">Dbase</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">PRINT</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>               
+                <span class="n">n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">neuronName</span><span class="p">[</span><span class="n">neuron</span><span class="p">]</span>
+                <span class="n">epochs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">GetTree</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span>
+                
+                <span class="bp">self</span><span class="o">.</span><span class="n">spikeOverwriteLoc</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="s">&#39;.&#39;</span> <span class="o">+</span> <span class="n">e</span> <span class="o">+</span> <span class="s">&#39;.spikes&#39;</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="s">&#39;.&#39;</span> <span class="o">+</span> <span class="n">e</span><span class="p">,</span> 
+                                          <span class="n">n</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="s">&#39;_&#39;</span> <span class="o">+</span> <span class="n">e</span> <span class="o">+</span> <span class="s">&#39;_spikes&#39;</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Data</span><span class="o">.</span><span class="n">CloseDatabase</span><span class="p">(</span><span class="n">PRINT</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">print</span> <span class="s">&#39;spike handle: &#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spikeOverwriteLoc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">update_curve</span><span class="p">()</span>
+                
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">print</span> <span class="s">&#39;ValueError. Could not compute wave filter&#39;</span>
+                <span class="k">pass</span>
+
+</div>
+<div class="viewcode-block" id="PlotWidget.add_data_to_DBase"><a class="viewcode-back" href="../../DataViewer_plotQwt.html#DataViewer.plotQwt.PlotWidget.add_data_to_DBase">[docs]</a>    <span class="k">def</span> <span class="nf">add_data_to_DBase</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkAddData</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s">&quot;Are you sure you want to add filtered spikes (green trace) to the DB?&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkAddData</span><span class="o">.</span><span class="n">setInformativeText</span><span class="p">(</span><span class="s">&quot;This will overwrite the existing spike data.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkAddData</span><span class="o">.</span><span class="n">setStandardButtons</span><span class="p">(</span><span class="n">qg</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span> <span class="o">|</span> <span class="n">qg</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">No</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checkAddData</span><span class="o">.</span><span class="n">setDefaultButton</span><span class="p">(</span><span class="n">qg</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span><span class="p">)</span>
+        <span class="n">choice</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checkAddData</span><span class="o">.</span><span class="n">exec_</span><span class="p">()</span> <span class="o">==</span> <span class="n">qg</span><span class="o">.</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span>
+        <span class="k">if</span> <span class="n">choice</span><span class="p">:</span>
+            <span class="n">tim</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">ctime</span><span class="p">()</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">Dbase</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spikeOverwriteLoc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">PRINT</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Data</span><span class="o">.</span><span class="n">RemoveChild</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spikeOverwriteLoc</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">option</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Data</span><span class="o">.</span><span class="n">AddData2Database</span><span class="p">(</span><span class="s">&#39;spikes&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spikes</span><span class="p">,</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">spikeOverwriteLoc</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Data</span><span class="o">.</span><span class="n">AddGitVersion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spikeOverwriteLoc</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span>
+                                         <span class="n">Action</span> <span class="o">=</span> <span class="s">&#39;updated_{0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">spikeOverwriteLoc</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> 
+                                         <span class="nb">str</span><span class="p">(</span><span class="n">tim</span><span class="o">.</span><span class="n">day</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;_&#39;</span> <span class="o">+</span>
+                                         <span class="nb">str</span><span class="p">(</span><span class="n">tim</span><span class="o">.</span><span class="n">month</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;_&#39;</span> <span class="o">+</span>
+                                         <span class="nb">str</span><span class="p">(</span><span class="n">tim</span><span class="o">.</span><span class="n">year</span><span class="p">)</span> <span class="p">))</span>
+                                         
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Data</span><span class="o">.</span><span class="n">CloseDatabase</span><span class="p">(</span><span class="n">PRINT</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            
+            <span class="sd">&quot;&quot;&quot; add git version here &quot;&quot;&quot;</span>
+            <span class="k">print</span> <span class="s">&#39;spike data successfully overwritten.&#39;</span>
+
+    </div>
+<div class="viewcode-block" id="PlotWidget.update_curve"><a class="viewcode-back" href="../../DataViewer_plotQwt.html#DataViewer.plotQwt.PlotWidget.update_curve">[docs]</a>    <span class="k">def</span> <span class="nf">update_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update curve</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">curve_item</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xData</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">second_curve_item</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xData</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y2Data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">replot</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">do_autoscale</span><span class="p">()</span>
+        </div>
+<div class="viewcode-block" id="PlotWidget.but_clicked"><a class="viewcode-back" href="../../DataViewer_plotQwt.html#DataViewer.plotQwt.PlotWidget.but_clicked">[docs]</a>    <span class="k">def</span> <span class="nf">but_clicked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        when refresh button is clicked, the tree is refreshed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">refreshTree</span><span class="p">()</span>
+    </div>
+<div class="viewcode-block" id="PlotWidget.double_clicked"><a class="viewcode-back" href="../../DataViewer_plotQwt.html#DataViewer.plotQwt.PlotWidget.double_clicked">[docs]</a>    <span class="k">def</span> <span class="nf">double_clicked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        when a name button is clicked, iterate over the model, </span>
+<span class="sd">        find the neuron with this name, and set the treeviews current item</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">print</span> <span class="s">&#39;here&#39;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">TabWid</span><span class="o">.</span><span class="n">GetCurrentTab</span><span class="p">()</span>
+        <span class="k">print</span> <span class="n">index</span>
+        <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">column</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">root</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+            <span class="n">neuron</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+            <span class="n">epoch</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+            <span class="k">print</span> <span class="n">root</span><span class="p">,</span> <span class="n">neuron</span><span class="p">,</span> <span class="n">epoch</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">DataBasesOpen</span><span class="p">[</span><span class="n">root</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">Dbase</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">PRINT</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+            
+            <span class="n">neurons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">GetTree</span><span class="p">()</span>         
+            <span class="n">n</span> <span class="o">=</span> <span class="n">neurons</span><span class="p">[</span><span class="n">neuron</span><span class="p">]</span>
+                
+            <span class="n">epochs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">GetTree</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span>
+            
+            <span class="k">if</span> <span class="n">e</span> <span class="o">!=</span> <span class="s">&#39;git&#39;</span><span class="p">:</span>
+            
+                <span class="n">rawDataquery</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="n">NeuronName</span> <span class="o">=</span> <span class="n">n</span><span class="p">,</span> <span class="n">Epoch</span> <span class="o">=</span> <span class="n">e</span><span class="p">,</span> <span class="n">DataName</span> <span class="o">=</span> <span class="s">&#39;rawData&#39;</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">spikesDataquery</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="n">NeuronName</span> <span class="o">=</span> <span class="n">n</span><span class="p">,</span> <span class="n">Epoch</span> <span class="o">=</span> <span class="n">e</span><span class="p">,</span> <span class="n">DataName</span> <span class="o">=</span> <span class="s">&#39;spikes&#39;</span><span class="p">)</span>   
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span> <span class="o">=</span> <span class="n">rawDataquery</span>
+                    <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">y2Data</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">spikesDataquery</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">y2Data</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">spikesDataquery</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+                    
+                    <span class="k">print</span> <span class="s">&#39;spike data not available.&#39;</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">y2Data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span>
+    
+                <span class="bp">self</span><span class="o">.</span><span class="n">xData</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">update_curve</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Data</span><span class="o">.</span><span class="n">CloseDatabase</span><span class="p">(</span><span class="n">PRINT</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            
+        <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">column</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            
+            <span class="n">root</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+            <span class="n">neuron</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+            <span class="n">epoch</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">DataBasesOpen</span><span class="p">[</span><span class="n">root</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">Dbase</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">PRINT</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+                
+                <span class="n">neurons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">GetTree</span><span class="p">()</span>
+                <span class="n">n</span> <span class="o">=</span> <span class="n">neurons</span><span class="p">[</span><span class="n">neuron</span><span class="p">]</span>
+                
+                <span class="n">epochs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">GetTree</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span>
+                
+                <span class="k">if</span> <span class="n">e</span> <span class="o">!=</span> <span class="s">&#39;git&#39;</span><span class="p">:</span>
+                    <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">dataName</span><span class="p">[</span><span class="n">data</span><span class="p">]</span> <span class="c"># account for git dataName</span>
+                    
+                    <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="s">&#39;params&#39;</span><span class="p">:</span>
+    
+                        <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span> <span class="n">NeuronName</span> <span class="o">=</span> <span class="n">n</span><span class="p">,</span> <span class="n">Epoch</span> <span class="o">=</span> <span class="n">e</span><span class="p">,</span> <span class="n">DataName</span> <span class="o">=</span> <span class="n">d</span><span class="p">)</span>
+                    
+                        <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                            
+                            <span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span> <span class="o">=</span> <span class="n">query</span>
+                            
+                            <span class="k">try</span><span class="p">:</span>
+                                <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">y2Data</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">spikesDataquery</span>
+                                <span class="k">else</span><span class="p">:</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">y2Data</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">spikesDataquery</span>
+                            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">y2Data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span>
+                             
+                                
+                            <span class="bp">self</span><span class="o">.</span><span class="n">xData</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y1Data</span><span class="p">))</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">update_curve</span><span class="p">()</span>
+                        
+                        <span class="k">if</span> <span class="n">query</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="k">print</span> <span class="s">&#39; &#39;</span>
+                            <span class="k">print</span> <span class="n">d</span><span class="p">,</span> <span class="s">&#39;: &#39;</span><span class="p">,</span> <span class="n">query</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                            
+                    <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Data</span><span class="o">.</span><span class="n">CloseDatabase</span><span class="p">(</span><span class="n">PRINT</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">pass</span>
+        
+        <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">column</span><span class="p">()</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            
+            <span class="n">root</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+            <span class="n">neuron</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+            <span class="n">epoch</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">parent</span><span class="p">()</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+            <span class="n">param</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">row</span><span class="p">()</span>
+
+            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">DataBasesOpen</span><span class="p">[</span><span class="n">root</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">Dbase</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">PRINT</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>           
+            <span class="n">neurons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">GetTree</span><span class="p">()</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">neurons</span><span class="p">[</span><span class="n">neuron</span><span class="p">]</span>
+            
+            <span class="n">epochs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">GetTree</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span>
+            
+            <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">dataName</span><span class="p">[</span><span class="n">data</span><span class="p">]</span> <span class="c"># account for git dataName</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">databaseScroll</span><span class="o">.</span><span class="n">paramName</span><span class="p">[</span><span class="n">param</span><span class="p">]</span>
+            <span class="n">query</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Query</span><span class="p">(</span><span class="n">NeuronName</span> <span class="o">=</span> <span class="n">n</span><span class="p">,</span> <span class="n">Epoch</span> <span class="o">=</span> <span class="n">e</span><span class="p">,</span> 
+                                     <span class="n">DataName</span> <span class="o">=</span> <span class="n">d</span> <span class="o">+</span> <span class="s">&#39;.&#39;</span> <span class="o">+</span> <span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">print</span> <span class="s">&#39; &#39;</span>
+            <span class="k">print</span> <span class="n">p</span><span class="p">,</span> <span class="s">&#39;: &#39;</span><span class="p">,</span> <span class="n">query</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Data</span><span class="o">.</span><span class="n">CloseDatabase</span><span class="p">(</span><span class="n">PRINT</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">DataViewer 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, B.P. Schmidt.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

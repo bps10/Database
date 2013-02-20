@@ -17,6 +17,8 @@ from guidata.configtools import get_icon
 from spyderlib.widgets.internalshell import InternalShell
        
 class MainWindow(qg.QMainWindow):
+    """This one generates the main window and orchestrates all other widgets
+    """
     def __init__(self):
         qg.QMainWindow.__init__(self)
         self.setWindowTitle("Neuron Database")
@@ -37,6 +39,8 @@ class MainWindow(qg.QMainWindow):
         self._constructConsoleWidget(central_widget)
 
     def _constructFileMenu(self):
+        """
+        """
         file_menu = self.menuBar().addMenu("File")
         quit_action = create_action(self, "Quit",
                                     shortcut="Ctrl+Q",
@@ -60,6 +64,8 @@ class MainWindow(qg.QMainWindow):
                                 closeDB_action))
         
     def _constructEditMenu(self):
+        """
+        """
         edit_menu = self.menuBar().addMenu("Edit")
         editparam1_action = create_action(self, "Import dataset",
                                           shortcut ="Ctrl+A",
@@ -72,6 +78,8 @@ class MainWindow(qg.QMainWindow):
         
 
     def _constructConsoleWidget(self, central_widget):
+        """
+        """
         font = qg.QFont("Courier new")
         font.setPointSize(12)
         ns = {'win': self, 'widget': central_widget}
@@ -97,6 +105,8 @@ class MainWindow(qg.QMainWindow):
         
             
     def add_plot(self, title):
+        """
+        """
         self.widget = PlotWidget(self)
         self.widget.setup_widget(title)
         self.centralWidget().layout().addWidget(self.widget)
@@ -106,22 +116,28 @@ class MainWindow(qg.QMainWindow):
 
         
     def setup_window(self):
-        #---Add toolbar and register manager tools
+        """Add toolbar and register manager tools
+        """
         toolbar = self.addToolBar("tools")
         self.manager.add_toolbar(toolbar, id(toolbar))
         self.manager.register_all_curve_tools()
-        #---
         
     def closeEvent(self, event):
+        """
+        """
         self.console.exit_interpreter()
         event.accept()       
 
     def findOpenDBases(self):
+        """
+        """
         return self.widget.databaseScroll.DataBasesOpen
         
     ### popup actions: 
         
     def add_newData(self):
+        """
+        """
         DBname = Popup(self.findOpenDBases(), 
                        textMessage = "add data to a database:",
                        style = 4)
@@ -145,6 +161,8 @@ class MainWindow(qg.QMainWindow):
                 
 
     def open_Database(self):
+        """
+        """
         DBname = Popup(self.findOpenDBases(), 
                        textMessage = "select database to open",
                        style = 3)
@@ -163,6 +181,8 @@ class MainWindow(qg.QMainWindow):
          
                 
     def create_Database(self):
+        """
+        """        
         DBname = Popup(self.findOpenDBases(), 
                        textMessage = "enter name of new database",
                        style = 2)
@@ -179,6 +199,8 @@ class MainWindow(qg.QMainWindow):
             
         
     def delete_Neuron(self):
+        """
+        """
         DBname = Popup(self.findOpenDBases(), 
                        textMessage = "enter name of neuron to delete",
                        style = 1)
@@ -204,6 +226,8 @@ class MainWindow(qg.QMainWindow):
          
          
     def close_Database(self):
+        """
+        """
         DBname = Popup(self.findOpenDBases(), 
                        textMessage = "select database to close",
                        style = 0)

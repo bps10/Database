@@ -32,6 +32,7 @@ thefile.close()
 def create_executable():
     """Build executable using ``guidata.disthelpers``"""
     dist = Distribution()
+    #dist.includes += ['DatabaseWrapper', 'DataViewer', 'Utilities']
     dist.setup(name="Database", version="1.1",
                description=u"HDF5 database in a gui shell",
                script="guiMain.pyw", target_name="Database.exe")
@@ -41,6 +42,7 @@ def create_executable():
     dist.add_modules('guidata')
     dist.add_modules('guiqwt')
     dist.add_modules('scipy.io')
+    dist.add_modules('h5py')
     dist.add_modules('spyderlib')
     dist.excludes += ['IPython']
     # Building executable
