@@ -9,14 +9,14 @@ from PyQt4.QtGui import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                               QMainWindow, QLineEdit, QTreeWidget, QTreeWidgetItem, 
                               QCheckBox, QSpacerItem, QLabel, QFont, QDockWidget,
                               QMessageBox, QGroupBox, QDialog, QComboBox,
-                              QFileDialog, QTabWidget, QTabBar)
-from PyQt4.QtCore import (SIGNAL, Qt, QRect, pyqtSignal, QObject)
+                              QFileDialog, QTabWidget,)
+from PyQt4.QtCore import (SIGNAL, Qt, QRect)
 
 # guidata imports
 from guidata.qthelpers import create_action, add_actions, get_std_icon
 
 # user defined imports
-import Database as Db
+import dbase as Db
 import Preprocessing as pp
 from ProgressBar import BusyBar
 
@@ -349,7 +349,7 @@ class treeList(QTreeWidget):
                     singleEpoch.setText(1, epoch)
                     
                     
-                    epochTree = self.Db.GetTree( neuron + '.' + epoch)
+                    epochTree = self.Db.GetTree( neuron + '/' + epoch)
                     for countData,data in enumerate(epochTree):
                         singleData = QTreeWidgetItem(singleEpoch) 
                         singleData.setText(2, data)
@@ -358,7 +358,7 @@ class treeList(QTreeWidget):
                             self.dataName.append(data)
                             
                         if data == 'params':
-                            paramTree = self.Db.GetTree( neuron + '.' + epoch + '.' + data)
+                            paramTree = self.Db.GetTree( neuron + '/' + epoch + '/' + data)
                             for countParam,param in enumerate(paramTree):
                                 singleParam = QTreeWidgetItem(singleData)
                                 singleParam.setText(3, param)

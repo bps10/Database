@@ -3,13 +3,17 @@ from scipy.io import loadmat
 import numpy as np
 import glob as glob
 import h5py as h5
-#import os
+import os
 import datetime as dt
 
 class Database():
     """
     A class for working with an HDF5 database.
     Utilizes the h5py library.
+    
+    .. todo:
+        1. Finish childlist
+        2. Fuller search / query functions
 
     """
     def __init__(self):
@@ -22,6 +26,11 @@ class Database():
         pass
 
     def _formatParents(self, Parents):
+        """ Properly formates parents. Input can be a string or a list of 
+        strings.
+        """
+        if type(Parents) == str:
+            return '/' + Parents + '/'
         if not isinstance(Parents, basestring):
             loc = ''
             for parent in Parents:
@@ -29,7 +38,7 @@ class Database():
             parentTree = loc + '/'
             return parentTree
         else:
-            raise DatabaseError('Parents must be a python list.')
+            raise DatabaseError('Parents must be a string or list.')
                 
     def AddData2Database(self, DataName, Data, Parents=None, 
                          comp=True):
@@ -45,7 +54,7 @@ class Database():
         the new data.
         :type param: str
         :param Parents: provide name of parents if they exist. 
-        :type Parents: list of strings
+        :type Parents: string or a list of strings
 
 
         """
@@ -57,9 +66,14 @@ class Database():
             name = self._formatParents(Parents) + DataName
         
         if comp:
-            self.file.create_dataset(name, data=Data, dtype=Data.dtype,
+            if type(Data) == np.ndarray:
+                self.file.create_dataset(name, data=Data,
                                           fletcher32=True, compression='gzip', 
                                           compression_opts=4)
+            elif type(Data) == str: #force no compression in case of string
+                self.file.create_dataset(name, data=Data, dtype=str)   
+            elif type(Data) == float: #case of single numbers (eg, parameters)
+                self.file.create_dataset(name, data=Data, dtype=float)
         if not comp:
             self.file.create_dataset(name, data=Data, dtype=float)  
         
@@ -142,7 +156,7 @@ class Database():
         :param GroupName: provide a name for the group.
         :type GroupName: str
         :param Parents: provide names of parent nodes if they exist.
-        :type Parents: str
+        :type Parents: string or a list of strings
 
         :returns: updates HDF5 database with new group.
 
@@ -155,6 +169,45 @@ class Database():
             parents = self._formatParents(Parents)
             self.file.create_group('/' + parents + GroupName)
 
+    def DeleteData(self, DataName, Parents=None, option=0):
+        """
+
+        Remove a neuron from the database. Uses the recursive option to force
+        the node and all of its children to be deleted.
+
+        :param NeuronName: name of the neuron you would like to remove.
+        :type NeuronName: str
+        :param option:  choose whether to confirm deletion with user. \n
+                        0 = yes\n
+                        1 = no\n
+        :type option: int
+
+        deletes neuron and all of its children from the database.
+        """
+
+        if option == 0:
+            decision = raw_input('Are you absolutely sure you want to \
+            delete this group and all of its children permenently? (y/n): ')
+            if decision.lower() == 'y' or decision.lower() == 'yes':
+                if Parents != None:
+                    parents = self._formatParents(Parents)
+                else:
+                    parents = ''
+                del self.file[parents + DataName]
+                self.file.flush()
+                print '{0} successfully deleted'.format(DataName)
+            else:
+                print 'Ok, nothing changed.'
+
+        if option == 1:
+
+            if Parents != None:
+                parents = self._formatParents(Parents)
+            else:
+                parents = ''
+            del self.file[parents + DataName]
+            self.file.flush()
+
     def Exists(self, FILE, Parents=None):
         """
 
@@ -163,7 +216,7 @@ class Database():
         :param FILE: pass a file name to see if it exists.
         :type FILE: str
         :param parent: parent nodes.  Must be a list.
-        :type parent: str
+        :type parent: string or a list of strings
 
         :returns: True or False
         :rtype: bool
@@ -190,14 +243,15 @@ class Database():
         """
         self.DirFiles = getAllFiles(Directory, suffix, subdirectories)
 
-    def GetChildList(self, FILE = None, parent = None):
+    def GetChildList(self, FILE=None, Parents=''):
         """
 
         Get a list of all children for a given node.
 
         :param FILE: file whose children you are interested in.
         :param parent: add a parent node before FILE node.
-
+        :type parent: string or a list of strings
+        
         :returns: list of children for FILE.
         :rtype: list
 
@@ -210,57 +264,69 @@ class Database():
 
         """
         if FILE == None:
-            ChildList = self.file.root.__members__
-
-        if FILE != None and parent == None:
-            foo = 'self.file.root.' + FILE
-            ChildList = eval(foo + '.__members__')
-        elif FILE != None and parent != None:
-            foo = 'self.file.root.' + parent + '.' + FILE
-            ChildList = eval(foo + '.__members__')
+            FILE = '/'
+        if Parents != '':   
+            parents = self._formatParents(Parents)
+        else:
+            parents = ''
+            
+        ChildList = self.file[parents + FILE].keys()
 
         return ChildList
         
-    def ImportAllData(self, NeuronName, Directory, GitDirectory=None,
-            progBar=0):
+    def ImportAllData(self, DataName, Directory='', GitDirectory=None,
+            progBar=0, verbose=False):
         """This one calls ImportDataFromRiekeLab to load a Rieke lab .mat file 
         or
         ImportHDF5 to import data from another H5 file depending on the file
         ending.
 
         """
+        if Directory != '' and Directory[-1] != '/':
+            Directory += '/'
+        
+        if verbose == True:
+            print 'Importing data, please wait '
+        
+        if os.path.exists(Directory + 'epoch000.mat'):
+    
+            self.getAllFiles(Directory)
+            self.CreateGroup(DataName)
+    
+            for i in range(0, self.DirFiles.shape[0]):
+                FileName, mat = os.path.splitext(
+                                    os.path.basename(self.DirFiles[i]))
 
-        #if GitDirectory is None:
-        #    GitDirectory = os.getcwd()
-
-        print 'Importing data, please wait ... '
-
-        self.getAllFiles(Directory)
-        self.CreateGroup(NeuronName)
-
-        for i in range(0, self.DirFiles.shape[0]):
-
-            FileName = self.DirFiles[i][-12:-4]
-
-            self.OpenMatlabData(FileName, Directory)
-            self.ImportDataFromRiekeLab(FileName, NeuronName)
-
-        self.AddGitVersion(NeuronName, NeuronName + '_InitialImport',
+                self.OpenMatlabData(self.DirFiles[i])
+                self.ImportDataFromRiekeLab(FileName, DataName)
+                    
+        elif os.path.isfile(Directory + DataName + '.h5'):
+            
+            self.ImportHDF5(DataName, Directory)
+            
+        else:
+            raise DatabaseError('Cannot import. Unsupported File type.')
+                
+        self.AddGitVersion(DataName, DataName + '_InitialImport',
                 GitDirectory)
         self.file.flush()
-        #self.CloseDatabase()
 
-    def ImportHDF5(self, FileName, Directory=None):
+    def ImportHDF5(self, FileName, Directory=''):
         """
         """
-        f = h5.File(Directory + FileName)
         
-        l = []
-        fil = lambda name, obj: (l.append([name, a, v]) for a, v in obj.attrs.iteritems())
-    
-        f.visititems(fil)
-        for row in l:
-            self.AddData2Database(row[1], row[2], [row[0]])
+        f = h5.File(Directory + FileName + '.h5')
+        
+        self.list = []    
+        f.visititems(self._fillIter)
+
+        for row in self.list:
+            self.AddData2Database(row[0], row[1], [FileName, row[2]])
+
+    def _fillIter(self, name, obj):
+            
+        for attr, val in obj.attrs.iteritems():
+            self.list.append([attr, val, name])
             
     def ImportDataFromRiekeLab(self, FileName, DataName):
         """
@@ -275,7 +341,7 @@ class Database():
 
         """
 
-        self.CreateGroup(FileName, [DataName])
+        self.CreateGroup(FileName, DataName)
 
         ## Get meta data.
         
@@ -383,7 +449,7 @@ class Database():
                     self.AddData2Database(name, np.array([ Data ], dtype=str),
                                     [DataName, FileName, 'params'])
 
-    def OpenMatlabData(self, FileName, Directory):
+    def OpenMatlabData(self, FileName, Directory=None):
         """
 
         Open matlab data. Just a rapper around scipy.io.loadmat
@@ -401,11 +467,11 @@ class Database():
 
         if Directory is None:
 
-            self.NeuronData = loadmat(FileName + '.mat')
+            self.NeuronData = loadmat(FileName)
 
         else:
-
-            self.NeuronData = loadmat(Directory + '/' + FileName + '.mat')
+            
+            self.NeuronData = loadmat(Directory + FileName)
             
     def OpenDatabase(self, DatabaseName, PRINT=0):
         """
@@ -455,51 +521,6 @@ class Database():
             parents = self._formatParents(Parents)
         return self.file[parents + DataName].value
                             
-    def DeleteData(self, DataName, Parents=None, option=0):
-        """
-
-        Remove a neuron from the database. Uses the recursive option to force
-        the node and all of its children to be deleted.
-
-        :param NeuronName: name of the neuron you would like to remove.
-        :type NeuronName: str
-        :param option:  choose whether to confirm deletion with user. \n
-                        0 = yes\n
-                        1 = no\n
-        :type option: int
-
-        :returns: deletes neuron and all of its children from the database.
-
-        .. todo::
-           1. change the name - node rather than neuron - to generalize.
-
-        """
-
-        if option == 0:
-            decision = raw_input('Are you absolutely sure you want to \
-            delete this group and all of its children permenently? (y/n): ')
-            if decision.lower() == 'y' or decision.lower() == 'yes':
-                if Parents != None:
-                    parents = self._formatParents(Parents)
-                else:
-                    parents = ''
-                deleteHandle = self.file[parents + DataName]
-                del deleteHandle
-                self.file.flush()
-                print '{0} successfully deleted'.format(DataName)
-            else:
-                print 'Ok, nothing changed.'
-
-        if option == 1:
-
-            if Parents != None:
-                parents = self._formatParents(Parents)
-            else:
-                parents = ''
-            deleteHandle = self.file[parents + DataName]
-            del deleteHandle
-            self.file.flush()
-
      
 def getAllFiles(Directory, suffix = None, subdirectories=1):
     """
@@ -527,7 +548,7 @@ def getAllFiles(Directory, suffix = None, subdirectories=1):
 
     if subdirectories == 0:
         DirFiles = []
-        for name in glob.glob(Directory + '/*' + suffix):
+        for name in glob.glob(Directory + '*' + suffix):
             DirFiles = np.append(DirFiles, name)
 
     if subdirectories == 1:
@@ -548,9 +569,6 @@ class DatabaseError(Exception):
     A simple class for raising database specific errors.
 
     See here for more on errors: http://docs.python.org/2/tutorial/errors.html
-
-    .. todo::
-       * incorporate DatabaseError into more of Database class
 
     """
     def __init__(self, value):
