@@ -65,7 +65,7 @@ class PlotWidget(qg.QWidget):
         self.connect(listButton, qc.SIGNAL('clicked()'), self.but_clicked)
         self.connect(processButton, qc.SIGNAL('clicked()'), 
                      self.run_preprocess)
-        self.connect(self.databaseScroll.TreeWid, 
+        self.connect(self.databaseScroll, 
                      qc.SIGNAL("doubleClicked(QModelIndex)"), 
                      self.double_clicked)
         self.connect(addwaveletButton, qc.SIGNAL('clicked()'), 

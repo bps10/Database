@@ -181,8 +181,6 @@ class databaseListModel(qg.QWidget):
         self.TabWid.setTabsClosable(True)
         self.TabWid.currTab = self.GetCurrentTab()
 
-        self.connect(self.TabWid, qc.SIGNAL("doubleClicked()"),
-                     self.dud)
         self.connect(self.TabWid, qc.SIGNAL("currentChanged(int)"),
                      self.switchTab)
         self.connect(self.TabWid, qc.SIGNAL("tabCloseRequested(int)"),
