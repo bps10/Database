@@ -279,7 +279,7 @@ class Database():
         return ChildList
         
     def ImportAllData(self, DataName, Directory='', GitDirectory=None,
-            progBar=0, verbose=False):
+                      verbose=False):
         """This one calls ImportDataFromRiekeLab to load a Rieke lab .mat file 
         or
         ImportHDF5 to import data from another H5 file depending on the file
@@ -316,7 +316,9 @@ class Database():
         self.file.flush()
 
     def ImportHDF5(self, FileName, Directory=''):
-        """
+        """Still needs some work
+        
+        .. todo:: make sure that data is actually imported!
         """
         
         f = h5.File(Directory + FileName + '.h5')
@@ -338,6 +340,11 @@ class Database():
 
         :returns: updated HDF5 database.
 
+        .. note::
+           As of now this is hard coded because the import from mat files does
+           not work past the first nested layer.  Everything else (i.e. the 
+           bulk of the file) is one huge array.  So long as nothing changes in
+           the structure of these files, however, this should be fine.
         """
 
         self.CreateGroup(FileName, DataName)

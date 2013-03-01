@@ -25,4 +25,5 @@ TestResults
 *.nja
 
 *.spyderproject
-*.spyderworkspace
+*.spyderworkspacebuild/
+docs/build/

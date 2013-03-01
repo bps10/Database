@@ -7,7 +7,70 @@ import os
 # user defined imports
 import DatabaseWrapper.dbase as Db
 
-class treeList(qg.QTreeWidget):
+
+class Dbase(object):
+    """An abstract class for manipulating databases.
+    """
+    def __init__(self, DBaseName, PRINT = 0):
+        
+        self.Data = Db.Database()
+        self.OpenDB(DBaseName, PRINT)
+        
+    def OpenDB(self, DBaseName, PRINT):
+        
+        if DBaseName != None:
+            self.Data.OpenDatabase(DBaseName, PRINT)
+                
+            if self.Data.file == []:
+                
+                if DBaseName[-3:] == '.h5':
+                    DBaseName = DBaseName[:-3]
+                
+                if PRINT == 0:
+                    print '{0} database created.'.format(DBaseName + '.h5')
+                    
+                self.Data.CreateDatabase(DBaseName)    
+        
+    def Query(self, DataName, Parents=None):
+        """Retrieve data from the database.
+        
+        :param DataName: name of the data to retrieve
+        :type DataName: str
+        :param Parents: optional. A string or list of parents in the database
+        tree.
+        :type Parents: str or list
+        
+        :returns: data.
+        """        
+        return self.Data.QueryDatabase( DataName, Parents)
+        
+    def AddData(self, DataName, Directory):
+        """Add data to an open Database.
+        
+        :param DataName:
+        """
+        self.Data.ImportAllData(DataName, Directory)   
+
+    def GetTree(self, DataName=None, Parents=''):
+        """Get a list of all children in the tree.
+        
+        :param DataName: optional. If no name give, will return root children.
+        :type DataName: str
+        :param Parents: optional. A string or list of parents in the database
+        tree for the given node (DataName).
+        :type Parents: str or list
+        
+        :returns: list of children (keys) for the given node.
+        """
+        if DataName == None:
+            tree = self.Data.GetChildList('/', '')
+        else:
+            tree = self.Data.GetChildList(DataName, Parents)
+        
+        return tree
+        
+        
+class treeList(Dbase, qg.QTreeWidget):
     """
     """
     def __init__(self, DBaseName = None):
@@ -15,8 +78,10 @@ class treeList(qg.QTreeWidget):
         self.DataBasesOpen = []
         self.DataBasesOpenPath = []
         
-        header = qg.QTreeWidgetItem(["Neuron","Epoch","Data", 
-                                  "Parameters"])
+        Rieke = True
+        if Rieke == True:
+            header = qg.QTreeWidgetItem(["Neuron", "Epoch","Data", 
+                                      "Parameters"])
         self.setHeaderItem(header)   
 
         self.constructTree(DBname = DBaseName)
@@ -29,55 +94,36 @@ class treeList(qg.QTreeWidget):
         
         else:
             
-            #self.busyBar = BusyBar( text = "Updating tree" ) 
-            #self.busyBar.changeValue.connect(self.busyBar.proBar.setValue, 
-            #                                 qc.Qt.QueuedConnection)
-            #self.busyBar.start()
-            
-            self.neuronName = []
-            self.dataName = []
-            self.paramName = []
             self.update()
             
-            self.Db = Dbase(DBname)
-            top = self.Db.GetTree()      
-            for countNeuron,neuron in enumerate(top):
-
-                neurons = qg.QTreeWidgetItem(self) 
-                neurons.setText(0, neuron)
-                
-                self.neuronName.append(neuron)
-    
-                neuronTree = self.Db.GetTree(neuron)
-                for countEpoch, epoch in enumerate(neuronTree):
-                    
-                    singleEpoch = qg.QTreeWidgetItem(neurons) 
-                    singleEpoch.setText(1, epoch)
-                    
-                    
-                    epochTree = self.Db.GetTree( neuron + '/' + epoch)
-                    for countData,data in enumerate(epochTree):
-                        singleData = qg.QTreeWidgetItem(singleEpoch) 
-                        singleData.setText(2, data)
-                        
-                        if countEpoch == 1:
-                            self.dataName.append(data)
-                            
-                        if data == 'params':
-                            paramTree = self.Db.GetTree( neuron + '/' + epoch + '/' + data)
-                            for countParam,param in enumerate(paramTree):
-                                singleParam = qg.QTreeWidgetItem(singleData)
-                                singleParam.setText(3, param)
-                                
-                                if countEpoch == 1:
-                                    self.paramName.append(param)
-                                    
-            self.Db.Data.CloseDatabase(PRINT=1)
-            #self.busyBar.Kill()
-            #QTimer.singleShot(10000, self.busyBar.Kill)
+            self.tree = {0: qg.QTreeWidgetItem(self)}
+            self.treeList = {}            
             
-    #def stopBar(self):
-    #    self.busyBar.Kill()   
+            self.Db = Dbase(DBname)
+            
+            self.Db.Data.file.visititems(self._createTree)
+
+    def _createTree(self, name, obj):
+        """
+        """
+        n = name.split('/')
+        level = int(len(n)) - 1
+        print level
+        if level > 0:
+            self.tree[level] = qg.QTreeWidgetItem(self.tree[level - 1]) 
+            self.tree[level].setText(level, n[-1])
+        else:
+            self.tree[0].setText(level, n[-1])
+            
+        if len(n) > 1:
+            par = n[:-1]
+            if par[0] == '':
+                par.pop('')
+            if par[0] != '/' and n[-1] != '/':
+                par.insert(0, '/')
+        else:
+            par = ''
+        self.treeList[n[-1]] = {'name': n[-1], 'parents': par}
         
     def refreshTree(self): 
         """
@@ -129,15 +175,13 @@ class databaseListModel(qg.QWidget):
         
         self.TreeWid = self.TabWid.children()[0].currentWidget()
         print self.TreeWid
-        #for name in dir(self.TreeWid):
-            #print name
         
         self.DataBasesOpen = []
         self.DataBasesOpenPath = []
         self.TabWid.setTabsClosable(True)
         self.TabWid.currTab = self.GetCurrentTab()
 
-        self.connect(self.TreeWid, qc.SIGNAL("doubleClicked(QModelIndex)"),
+        self.connect(self.TabWid, qc.SIGNAL("doubleClicked()"),
                      self.dud)
         self.connect(self.TabWid, qc.SIGNAL("currentChanged(int)"),
                      self.switchTab)
@@ -150,10 +194,10 @@ class databaseListModel(qg.QWidget):
     def switchTab(self, index):
         """
         """
-        print 'switching tabs!'
-        print index
-        print self.DataBasesOpen[index]
+        print 'on tab: ', self.DataBasesOpen[index]
         self.TreeWid = self.TabWid.children()[0].currentWidget()
+        print 'enabled? ', self.TabWid.isEnabled()
+        self.TabWid.activateWindow()
         #self.here = treeList(self.DataBasesOpen[index])
         
     def closeTab(self, index):
@@ -165,11 +209,6 @@ class databaseListModel(qg.QWidget):
         self.TreeWid = self.TabWid.children()[0].currentWidget()
         self.CloseDatabase(self.DataBasesOpen[index])
         self.here = treeList(self.DataBasesOpen[index])
-        
-    def onTabClick(self, index):
-        """
-        """
-        print 'woohoo!'
         
     def GetCurrentTab(self):
         """
@@ -184,8 +223,6 @@ class databaseListModel(qg.QWidget):
         self.here = treeList(DBaseName)
         self.TabWid.addTab(self.here, os.path.basename(DBaseName)[:-3])
         self.TreeWid = self.TabWid.children()[0].currentWidget()
-        
-        print self.TreeWid.neuronName[0]  
         
     def AppendDatabasesOpen(self, DBaseName):
         """
@@ -207,46 +244,3 @@ class databaseListModel(qg.QWidget):
         self.DataBasesOpen.remove(DBname)
         #self.DataBasesOpenPath.remove(endswith(DBname + '.h5'))   
         self.TabWid.update()
-
-
-        
-class Dbase():
-    """
-    """
-    def __init__(self, DBaseName, PRINT = 0):
-        
-        self.Data = Db.Database()
-        
-        if DBaseName != None:
-            self.Data.OpenDatabase(DBaseName, PRINT)
-                
-            if self.Data.file == []:
-                
-                if DBaseName[-3:] == '.h5':
-                    DBaseName = DBaseName[:-3]
-                
-                if PRINT == 0:
-                    print '{0} database created.'.format(DBaseName + '.h5')
-                    
-                self.Data.CreateDatabase(DBaseName)    
-        
-    def Query(self, NeuronName = 'Oct0212Bc8', Epoch = 'epoch040', DataName = 'rawData'):
-        """
-        """        
-        return self.Data.QueryDatabase( NeuronName, Epoch, DataName)
-        
-    def AddData(self, NeuronName, Directory):
-        """
-        """
-        self.Data.ImportAllData(NeuronName, Directory, progBar = 0)   
-
-    def GetTree(self, NeuronName = None):
-        """
-        """
-        if NeuronName == None:
-            tree = self.Data.GetChildList()
-        else:
-            tree = self.Data.GetChildList(NeuronName)
-        
-        return tree
-        
