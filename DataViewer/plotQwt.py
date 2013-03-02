@@ -4,7 +4,7 @@
 import PyQt4.QtGui as qg
 import PyQt4.QtCore as qc
 
-from databaseModels import Dbase, databaseListModel
+from databaseModels import Dbase, treeList  # databaseListModel
 import Utilities.preprocessing as pp
 #---Import plot widget base class
 from guiqwt.curve import CurvePlot
@@ -42,7 +42,7 @@ class PlotWidget(qg.QWidget):
         self.plot.add_item(self.second_curve_item)
         self.plot.set_antialiasing(True)
 
-        self.databaseScroll = databaseListModel(DBaseName = None)
+        self.databaseScroll = treeList(DBaseName = None)
 
         spacer = qg.QSpacerItem(30,40)
         
@@ -75,7 +75,7 @@ class PlotWidget(qg.QWidget):
         hlayout = qg.QHBoxLayout()
 
         
-        vlayout.addWidget(self.databaseScroll.TabWid)
+        vlayout.addWidget(self.databaseScroll)
         vlayout.addWidget(listButton)
 
         vlayout.addWidget(self.plot)
@@ -110,14 +110,14 @@ class PlotWidget(qg.QWidget):
                 self.y2Data = self.spikes = pp.spikeThreshold(foo)
                 self.y2Data = self.y2Data * max(self.y1Data)
                 
-                index = self.databaseScroll.currentIndex()
+                index = self.databaseScroll
                 root = index.parent().parent().row()
                 neuron = index.parent().row()
                 epoch = index.row()  
                 
-                r = self.databaseScroll.DataBasesOpen[root]
+                r = self.databaseScroll
                 self.data = Dbase(r, PRINT = 1)               
-                n = self.databaseScroll.neuronName[neuron]
+                n = self.databaseScroll
                 epochs = self.data.GetTree(n)
                 e = epochs[epoch]
                 
@@ -180,14 +180,14 @@ class PlotWidget(qg.QWidget):
         find the neuron with this name, and set the treeviews current item
         """
         print 'here'
-        index = self.databaseScroll.TabWid.GetCurrentTab()
+        index = self.databaseScroll
         print index
         if index.column() == 2:
             root = index.parent().parent().row()
             neuron = index.parent().row()
             epoch = index.row()
             print root, neuron, epoch
-            r = self.databaseScroll.DataBasesOpen[root]
+            r = self.databaseScroll
             self.data = Dbase(r, PRINT = 1)
             
             neurons = self.data.GetTree()         
@@ -223,7 +223,7 @@ class PlotWidget(qg.QWidget):
             data = index.row()
 
             try:
-                r = self.databaseScroll.DataBasesOpen[root]
+                r = self.databaseScroll
                 self.data = Dbase(r, PRINT = 1)
                 
                 neurons = self.data.GetTree()

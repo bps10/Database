@@ -80,7 +80,7 @@ class treeList(Dbase, qg.QTreeWidget):
         
         Rieke = True
         if Rieke == True:
-            header = qg.QTreeWidgetItem(["Neuron", "Epoch","Data", 
+            header = qg.QTreeWidgetItem(["Database", "Neuron", "Epoch","Data", 
                                       "Parameters"])
         self.setHeaderItem(header)   
 
@@ -107,8 +107,11 @@ class treeList(Dbase, qg.QTreeWidget):
         """
         """
         n = name.split('/')
-        level = int(len(n)) - 1
-        print level
+        
+        if n[0] != '':
+            level = int(len(n)) - 1
+        else: 
+            level = 0
         if level > 0:
             self.tree[level] = qg.QTreeWidgetItem(self.tree[level - 1]) 
             self.tree[level].setText(level, n[-1])
@@ -139,7 +142,13 @@ class treeList(Dbase, qg.QTreeWidget):
         """
         self.DataBasesOpenPath.append(DBname)
         self.DataBasesOpen.append(os.path.basename(DBname))
-    
+
+    def OpenDatabases(self, DBaseName):
+        """
+        """
+        self.constructTree(DBaseName)
+        self.AppendDatabasesOpen(DBaseName)
+        
     def CloseDatabase(self, DBname):
         """
         """
@@ -165,7 +174,8 @@ class treeList(Dbase, qg.QTreeWidget):
 
             
 class databaseListModel(qg.QWidget):
-    """
+    """No longer in use.  Eventually want to use tabs at the top to open
+    multiple database as once.  However, not able to make it work currently.
     """
     def __init__(self, DBaseName = None):
         qg.QWidget.__init__(self)
