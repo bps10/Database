@@ -97,6 +97,7 @@ class treeList(Dbase, qg.QTreeWidget):
             self.update()
             
             self.tree = {0: qg.QTreeWidgetItem(self)}
+            self.tree[0].setText(0,os.path.basename(DBname))
             self.treeList = {}            
             
             self.Db = Dbase(DBname)
@@ -109,14 +110,15 @@ class treeList(Dbase, qg.QTreeWidget):
         n = name.split('/')
         
         if n[0] != '':
-            level = int(len(n)) - 1
+            level = int(len(n))
         else: 
-            level = 0
-        if level > 0:
+            level = 1
+        if level > 1:
             self.tree[level] = qg.QTreeWidgetItem(self.tree[level - 1]) 
             self.tree[level].setText(level, n[-1])
         else:
-            self.tree[0].setText(level, n[-1])
+            self.tree[level] = qg.QTreeWidgetItem(self.tree[0]) 
+            self.tree[1].setText(level, n[-1])
             
         if len(n) > 1:
             par = n[:-1]

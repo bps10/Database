@@ -179,9 +179,12 @@ class PlotWidget(qg.QWidget):
         when a name button is clicked, iterate over the model, 
         find the neuron with this name, and set the treeviews current item
         """
-        print 'here'
-        index = self.databaseScroll
-        print index
+        index = self.databaseScroll.currentIndex()
+        item = self.databaseScroll.itemFromIndex(index)
+        root = self.databaseScroll.topLevelItem(index)
+        #root = self.databaseScroll.indexOfTopLevelItem(item)
+
+        print 'database: ', root
         if index.column() == 2:
             root = index.parent().parent().row()
             neuron = index.parent().row()
