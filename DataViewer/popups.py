@@ -58,8 +58,10 @@ class Popup(qg.QDialog):
                 vlayout.addLayout(h1layout)
                 
 
-            self.connect(enterbutton, qc.SIGNAL('clicked()'), self.returnSelection)
-            self.connect(cancelbutton, qc.SIGNAL('clicked()'), self.closePopup)
+            self.connect(enterbutton, qc.SIGNAL('clicked()'), 
+                         self.returnSelection)
+            self.connect(cancelbutton, qc.SIGNAL('clicked()'),
+                         self.closePopup)
                 
             hlayout = qg.QHBoxLayout()
             hlayout.addWidget(enterbutton)
@@ -100,7 +102,8 @@ class Popup(qg.QDialog):
             cancelbutton = qg.QPushButton("Cancel")
             
             self.dirName = qg.QFileDialog()
-            #self.selectedDirName = str(QFileDialog.getOpenFileName(options=QFileDialog.DontUseNativeDialog))
+            #self.selectedDirName = str(QFileDialog.
+                    #getOpenFileName(options=QFileDialog.DontUseNativeDialog))
             self.dirName.setFileMode(qg.QFileDialog.Directory)
             self.dirName.setOptions(qg.QFileDialog.ShowDirsOnly)
             

@@ -122,7 +122,7 @@ class Database():
 
         self.AddData2Database(Action, dat, ['git', DataName])
 
-    def CloseDatabase(self, PRINT=0):
+    def CloseDatabase(self, PRINT=False):
         """
 
         Close a database.
@@ -134,7 +134,7 @@ class Database():
 
         """
         self.file.close()
-        if PRINT == 0:
+        if PRINT == True:
             print "database closed"
                       
     def CreateDatabase(self, FileName):
@@ -246,6 +246,17 @@ class Database():
         """
         """
         self.DirFiles = getAllFiles(Directory, suffix, subdirectories)
+        
+    def getDType(self, DataName, Parents):
+        """
+        """
+        if Parents == None:
+            parents = '/'
+        else:
+            parents = self._formatParents(Parents)
+            
+        return str(type(self.file[parents + DataName]))
+                            
 
     def GetChildList(self, FILE=None, Parents=''):
         """
@@ -479,7 +490,7 @@ class Database():
             
             self.NeuronData = sio.loadmat(Directory + FileName)
             
-    def OpenDatabase(self, DatabaseName, PRINT=0):
+    def OpenDatabase(self, DatabaseName, PRINT=False):
         """
 
         Open a specific database.
@@ -499,7 +510,7 @@ class Database():
 
             if test:
                 self.file = h5.File(DatabaseName, mode="a")
-                if PRINT == 0:
+                if PRINT == True:
                     print '{0} database opened'.format(DatabaseName)
 
             if not test:

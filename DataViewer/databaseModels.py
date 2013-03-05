@@ -42,7 +42,7 @@ class Dbase(object):
         
         :returns: data.
         """        
-        return self.Data.QueryDatabase( DataName, Parents)
+        return self.Data.QueryDatabase(DataName, Parents)
         
     def AddData(self, DataName, Directory):
         """Add data to an open Database.
@@ -51,25 +51,7 @@ class Dbase(object):
         """
         self.Data.ImportAllData(DataName, Directory)   
 
-    def GetTree(self, DataName=None, Parents=''):
-        """Get a list of all children in the tree.
-        
-        :param DataName: optional. If no name give, will return root children.
-        :type DataName: str
-        :param Parents: optional. A string or list of parents in the database
-        tree for the given node (DataName).
-        :type Parents: str or list
-        
-        :returns: list of children (keys) for the given node.
-        """
-        if DataName == None:
-            tree = self.Data.GetChildList('/', '')
-        else:
-            tree = self.Data.GetChildList(DataName, Parents)
-        
-        return tree
-        
-        
+                
 class treeList(Dbase, qg.QTreeWidget):
     """
     """
@@ -77,11 +59,12 @@ class treeList(Dbase, qg.QTreeWidget):
         qg.QTreeWidget.__init__(self)
         self.DataBasesOpen = []
         self.DataBasesOpenPath = []
-        
+
         Rieke = True
         if Rieke == True:
-            header = qg.QTreeWidgetItem(["Database", "Neuron", "Epoch","Data", 
-                                      "Parameters"])
+            header = qg.QTreeWidgetItem(["Database", "Neuron", "Epoch","Data1", 
+                                      "Data2", "Data3", "Data4", "Data5"])
+                                      
         self.setHeaderItem(header)   
 
         self.constructTree(DBname = DBaseName)
@@ -98,11 +81,12 @@ class treeList(Dbase, qg.QTreeWidget):
             
             self.tree = {0: qg.QTreeWidgetItem(self)}
             self.tree[0].setText(0,os.path.basename(DBname))
-            self.treeList = {}            
+            #self.treeList = {}            
             
-            self.Db = Dbase(DBname)
-            
-            self.Db.Data.file.visititems(self._createTree)
+            DB = Db.Database()
+            DB.OpenDatabase(DBname, PRINT=True)
+            DB.file.visititems(self._createTree)
+            DB.CloseDatabase()
 
     def _createTree(self, name, obj):
         """
@@ -128,7 +112,7 @@ class treeList(Dbase, qg.QTreeWidget):
                 par.insert(0, '/')
         else:
             par = ''
-        self.treeList[n[-1]] = {'name': n[-1], 'parents': par}
+        #self.treeList[n[-1]] = {'name': n[-1], 'parents': par}
         
     def refreshTree(self): 
         """
@@ -138,6 +122,25 @@ class treeList(Dbase, qg.QTreeWidget):
             self.constructTree(DB)        
         self.update()
 
+    def GetDtype(self, DBname, dataName, parents):
+        '''
+        '''
+        print DBname, dataName, parents
+        DB = Db.Database()
+        DB.OpenDatabase(DBname, PRINT=0)
+        dtype_ = DB.getDType(dataName, parents)
+        DB.CloseDatabase()
+        return dtype_
+        
+    def GetData(self, DBname, dataName, parents):
+        '''
+        '''
+        DB = Db.Database()
+        DB.OpenDatabase(DBname, PRINT=True)
+        dat = DB.Query(dataName, parents)
+        DB.CloseDatabase()
+        return dat
+        
         
     def AppendDatabasesOpen(self, DBname):
         """

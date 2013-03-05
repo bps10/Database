@@ -43,6 +43,7 @@ class PlotWidget(qg.QWidget):
         self.plot.set_antialiasing(True)
 
         self.databaseScroll = treeList(DBaseName = None)
+        self.databaseScroll.setSortingEnabled(True)
 
         spacer = qg.QSpacerItem(30,40)
         
@@ -135,8 +136,10 @@ class PlotWidget(qg.QWidget):
     def add_data_to_DBase(self):
         """
         """
-        self.checkAddData.setText("Are you sure you want to add filtered spikes (green trace) to the DB?")
-        self.checkAddData.setInformativeText("This will overwrite the existing spike data.")
+        self.checkAddData.setText("Are you sure you want to add filtered \
+                                spikes (green trace) to the DB?")
+        self.checkAddData.setInformativeText("This will overwrite the existing\
+                                                spike data.")
         self.checkAddData.setStandardButtons(qg.QMessageBox.Yes | qg.QMessageBox.No )
         self.checkAddData.setDefaultButton(qg.QMessageBox.Yes)
         choice = self.checkAddData.exec_() == qg.QMessageBox.Yes
@@ -180,11 +183,46 @@ class PlotWidget(qg.QWidget):
         find the neuron with this name, and set the treeviews current item
         """
         index = self.databaseScroll.currentIndex()
-        item = self.databaseScroll.itemFromIndex(index)
-        root = self.databaseScroll.topLevelItem(index)
-        #root = self.databaseScroll.indexOfTopLevelItem(item)
+        item = self.databaseScroll.currentItem()
+        clickedCol = index.column()
 
-        print 'database: ', root
+        hasChild = True
+        ind = index.parent()
+        colCount = 1
+        parents = []
+        while hasChild:
+            #find root index and parents
+            root = ind.row()
+            if root != -1:
+                parent = str(self.databaseScroll.itemFromIndex(
+                                        ind).text(clickedCol - colCount))
+                parents.insert(0, parent)
+            if root == -1:
+                hasChild = False
+                if parents == []:
+                    parent = str(self.databaseScroll.itemFromIndex(
+                                        index).text(0))
+                    parents.insert(0, parent)
+                    
+            ind = ind.parent()
+            colCount += 1
+
+        name = str(item.text(clickedCol))
+        print 'name: ', name
+        print 'parents: ', parents
+        
+        if len(parents) == 1:
+            parents.append('')
+        if name[:-3] == '.h5':
+            name = '/'
+        
+        kind = self.databaseScroll.GetDtype(parents[0], name, parents[1:])
+        print kind
+        #if dtype_ == 'np.array':
+        #    clickedData = self.databaseScroll.GetData(parents[0], name, 
+        #                                          parents[1:])
+        #    print clickedData
+        '''    
         if index.column() == 2:
             root = index.parent().parent().row()
             neuron = index.parent().row()
@@ -290,3 +328,4 @@ class PlotWidget(qg.QWidget):
             print ' '
             print p, ': ', query
             self.data.Data.CloseDatabase(PRINT=1)
+        '''
